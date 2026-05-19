@@ -3,19 +3,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BookOpen, LayoutDashboard, Library, Dumbbell, ClipboardList, BarChart3, Bookmark, Trophy, User, Settings, HelpCircle, LogOut } from "lucide-react";
 import { cn } from "@/utils/cn";
+import { getTerm } from "@/utils/terminology";
 import { useAuthStore } from "@/store/authStore";
 import { signOut } from "@/supabase/auth";
 import { useRouter } from "next/navigation";
-
-const NAV = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/courses", icon: Library, label: "My Courses" },
-  { href: "/practice", icon: Dumbbell, label: "Practice" },
-  { href: "/quiz-history", icon: ClipboardList, label: "Quiz History" },
-  { href: "/analytics", icon: BarChart3, label: "Analytics" },
-  { href: "/bookmarks", icon: Bookmark, label: "Bookmarks" },
-  { href: "/leaderboard", icon: Trophy, label: "Leaderboard" },
-];
 
 const BOTTOM_NAV = [
   { href: "/profile", icon: User, label: "Profile" },
@@ -27,6 +18,18 @@ export default function Sidebar() {
   const path = usePathname();
   const router = useRouter();
   const { profile, logout } = useAuthStore();
+
+  const term = getTerm(profile?.exam_type); // "Courses" or "Subjects"
+
+  const NAV = [
+    { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+    { href: "/courses", icon: Library, label: `My ${term}` },
+    { href: "/practice", icon: Dumbbell, label: "Practice" },
+    { href: "/quiz-history", icon: ClipboardList, label: "Quiz History" },
+    { href: "/analytics", icon: BarChart3, label: "Analytics" },
+    { href: "/bookmarks", icon: Bookmark, label: "Bookmarks" },
+    { href: "/leaderboard", icon: Trophy, label: "Leaderboard" },
+  ];
 
   const handleLogout = async () => {
     await signOut();

@@ -17,6 +17,39 @@ export async function getCourses() {
   return data;
 }
 
+// Fetches subjects for WAEC, UTME or Post-UTME from their Supabase tables
+// e.g. "waec" → "waec_subjects", "utme" → "utme_subjects"
+export async function getExamSubjects(examType: "waec" | "utme" | "post_utme") {
+  const table = `${examType}_subjects`;
+  const { data, error } = await supabase.from(table).select("*").order("name");
+  if (error) return [];
+  return data as {
+    subject_id: string;
+    name: string;
+    description: string;
+    exam_type: string;
+    category?: string;
+  }[];
+}
+
+// Works for any school — table name is built from schoolId e.g. "unilag" → "unilag_courses"
+export async function getSchoolCourses(schoolId: string) {
+  const table = `${schoolId.toLowerCase()}_courses`;
+  const { data, error } = await supabase
+    .from(table)
+    .select("*")
+    .order("name");
+  // Return empty array if the table doesn't exist yet for that school
+  if (error) return [];
+  return data as {
+    course_id: string;
+    name: string;
+    description: string;
+    exam_type: string;
+    department: string;
+  }[];
+}
+
 export async function getCourse(courseId: string) {
   const { data, error } = await supabase.from("courses").select("*").eq("id", courseId).single();
   if (error) throw error;

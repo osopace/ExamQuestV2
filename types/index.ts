@@ -21,6 +21,17 @@ export interface Profile {
   created_at: string;
   updated_at: string;
 }
+export interface StepTwoProps {
+  examType: ExamType | null;
+  schoolId: string;
+  setSchoolId: (id: string) => void;
+  selectedCourses: string[];
+  filteredCourses: Course[];
+  toggleCourse: (id: string) => void;
+  loading: boolean;
+  onBack: () => void;
+  onFinish: () => void;
+}
 
 export interface School {
   id: string;
@@ -36,12 +47,11 @@ export interface Course {
   name: string;
   description: string;
   exam_type: ExamType;
-  department?: string;
   icon: string;
   color: string;
   total_questions: number;
+
   total_quizzes: number;
-  rating: number;
 }
 
 export interface Topic {
@@ -61,7 +71,7 @@ export interface QuestionOption {
 export interface Question {
   id: string;
   course_id: string;
-  topic_id: string;
+  course_name: string;
   topic_name?: string;
   question_text: string;
   difficulty: Difficulty;
@@ -149,9 +159,16 @@ export interface ScoreOverTime {
 }
 
 export interface TopicAnalytics {
-  topic_id: string;
-  topic_name: string;
+  course_id: string;
+  course_name: string;
   total_questions: number;
   correct: number;
   accuracy: number;
+}
+export interface SchoolCourse {
+  course_id: string;
+  name: string;
+  description: string;
+  exam_type: string;
+  department: string;
 }
