@@ -5,7 +5,7 @@ import { BookOpen, CheckCircle, ArrowRight } from "lucide-react";
 import toast from "react-hot-toast";
 import Button from "@/components/ui/Button";
 import { Stepper } from "@/components/ui/index";
-import { SCHOOLS, COURSES } from "@/constants/mockData";
+import { SCHOOLS } from "@/constants/mockData";
 import StepTwo from "./StepTwo";
 import { updateProfile } from "@/supabase/db";
 import { useAuthStore } from "@/store/authStore";
@@ -19,9 +19,15 @@ const EXAM_TYPES: {
   emoji: string;
 }[] = [
   {
-    id: "waec",
-    label: "WAEC/NECO",
+    id: "wassce",
+    label: "WAEC",
     desc: "West African Examinations Council",
+    emoji: "📝",
+  },
+  {
+    id: "neco",
+    label: "NECO",
+    desc: "National Examinations Council",
     emoji: "📝",
   },
   {
@@ -31,7 +37,7 @@ const EXAM_TYPES: {
     emoji: "🎯",
   },
   {
-    id: "post_utme",
+    id: "post-utme",
     label: "Post-UTME",
     desc: "University screening examinations",
     emoji: "🏫",
@@ -44,7 +50,6 @@ const EXAM_TYPES: {
   },
 ];
 
-
 export default function OnboardingPage() {
   const router = useRouter();
   const { profile, updateProfile: updateStore } = useAuthStore();
@@ -55,8 +60,6 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false);
 
   const steps = ["Exam Type", `School & ${getTerm(examType)}`, "Done"];
-
-  const filteredCourses = COURSES.filter((c) => c.exam_type === examType);
 
   const toggleCourse = (id: string) =>
     setSelectedCourses((p) =>
@@ -155,7 +158,7 @@ export default function OnboardingPage() {
             schoolId={schoolId}
             setSchoolId={setSchoolId}
             selectedCourses={selectedCourses}
-            filteredCourses={filteredCourses}
+            filteredCourses={[]}
             toggleCourse={toggleCourse}
             loading={loading}
             onBack={() => setStep(0)}

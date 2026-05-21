@@ -26,7 +26,7 @@ export default function StepTwo({
   onFinish,
 }: StepTwoProps) {
   const isUniversity = examType === "university";
-  const term = getTerm(examType);         // "Courses" or "Subjects"
+  const term = getTerm(examType); // "Courses" or "Subjects"
   const termSingular = getTerm(examType, false); // "Course" or "Subject"
 
   const [fetched, setFetched] = useState<DisplayCourse[]>([]);
@@ -40,15 +40,15 @@ export default function StepTwo({
     // Non-university: fetch from waec_subjects / utme_subjects / post_utme_subjects
     if (!isUniversity) {
       setFetchingCourses(true);
-      getExamSubjects(examType as "waec" | "utme" | "post_utme")
+      getExamSubjects(examType as "wassce" | "neco" | "utme" | "post-utme")
         .then((rows) =>
           setFetched(
             rows.map((s) => ({
               id: s.subject_id,
               name: s.name,
-              subtitle: s.category ?? s.exam_type,
-            }))
-          )
+              subtitle: s.exam_type,
+            })),
+          ),
         )
         .catch(() => setFetched([]))
         .finally(() => setFetchingCourses(false));
@@ -65,8 +65,8 @@ export default function StepTwo({
               id: c.course_id,
               name: c.name,
               subtitle: c.department,
-            }))
-          )
+            })),
+          ),
         )
         .catch(() => setFetched([]))
         .finally(() => setFetchingCourses(false));
@@ -147,10 +147,14 @@ export default function StepTwo({
                 >
                   <div
                     className={`w-5 h-5 rounded-md border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
-                      selected ? "bg-primary-600 border-primary-600" : "border-gray-300"
+                      selected
+                        ? "bg-primary-600 border-primary-600"
+                        : "border-gray-300"
                     }`}
                   >
-                    {selected && <CheckCircle size={12} className="text-white" />}
+                    {selected && (
+                      <CheckCircle size={12} className="text-white" />
+                    )}
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-gray-900 truncate">
@@ -172,7 +176,11 @@ export default function StepTwo({
       </div>
 
       <div className="flex gap-3 mt-8">
-        <Button variant="outline" leftIcon={<ArrowLeft size={18} />} onClick={onBack}>
+        <Button
+          variant="outline"
+          leftIcon={<ArrowLeft size={18} />}
+          onClick={onBack}
+        >
           Back
         </Button>
         <Button
