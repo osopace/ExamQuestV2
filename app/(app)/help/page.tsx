@@ -1,6 +1,16 @@
 "use client";
 import { useState } from "react";
-import { Search, MessageCircle, Mail, ChevronDown, ChevronUp, BookOpen, Zap, BarChart3, User } from "lucide-react";
+import {
+  Search,
+  MessageCircle,
+  Mail,
+  ChevronDown,
+  ChevronUp,
+  BookOpen,
+  Zap,
+  BarChart3,
+  User,
+} from "lucide-react";
 import { Card } from "@/components/ui/index";
 import Topbar from "@/components/shared/Topbar";
 import { FAQ } from "@/constants/mockData";
@@ -26,11 +36,12 @@ export default function HelpPage() {
     <div>
       <Topbar title="Help Center" />
       <div className="p-6 max-w-3xl mx-auto space-y-7">
-
         {/* Search hero */}
         <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl p-8 text-center text-white">
           <h2 className="text-2xl font-bold mb-2">How can we help?</h2>
-          <p className="text-primary-200 mb-5">Search our help articles or browse categories below.</p>
+          <p className="text-primary-200 mb-5">
+            Search our help articles or browse categories below.
+          </p>
           <div className="flex items-center gap-2 bg-white rounded-xl px-4 h-11 max-w-md mx-auto">
             <Search size={16} className="text-gray-400" />
             <input
@@ -47,7 +58,12 @@ export default function HelpPage() {
           <h3 className="font-bold text-gray-900 mb-4">Browse by Category</h3>
           <div className="grid sm:grid-cols-2 gap-4">
             {CATEGORIES.map(({ icon: Icon, label, articles }) => (
-              <Card key={label} hoverable padding="md" className="flex items-center gap-4">
+              <Card
+                key={label}
+                hoverable
+                padding="md"
+                className="flex items-center gap-4"
+              >
                 <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center flex-shrink-0">
                   <Icon size={18} className="text-primary-600" />
                 </div>
@@ -62,7 +78,9 @@ export default function HelpPage() {
 
         {/* FAQ accordion */}
         <section>
-          <h3 className="font-bold text-gray-900 mb-4">Frequently Asked Questions</h3>
+          <h3 className="font-bold text-gray-900 mb-4">
+            Frequently Asked Questions
+          </h3>
           <div className="space-y-2">
             {filtered.map((item, i) => (
               <Card key={i} padding="none" className="overflow-hidden">
@@ -70,8 +88,20 @@ export default function HelpPage() {
                   onClick={() => setOpen(open === i ? null : i)}
                   className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors text-left"
                 >
-                  <span className="font-semibold text-gray-900 text-sm pr-4">{item.q}</span>
-                  {open === i ? <ChevronUp size={16} className="text-gray-400 flex-shrink-0" /> : <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />}
+                  <span className="font-semibold text-gray-900 text-sm pr-4">
+                    {item.q}
+                  </span>
+                  {open === i ? (
+                    <ChevronUp
+                      size={16}
+                      className="text-gray-400 flex-shrink-0"
+                    />
+                  ) : (
+                    <ChevronDown
+                      size={16}
+                      className="text-gray-400 flex-shrink-0"
+                    />
+                  )}
                 </button>
                 {open === i && (
                   <div className="px-5 pb-5 text-sm text-gray-600 leading-relaxed border-t border-gray-50 pt-3 animate-fade-in">
@@ -97,10 +127,21 @@ export default function HelpPage() {
               <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0">
                 <MessageCircle size={18} className="text-green-600" />
               </div>
-              <div>
-                <p className="font-semibold text-gray-900">Live Chat</p>
-                <p className="text-xs text-gray-500">Available Mon–Fri, 9am–6pm WAT</p>
-              </div>
+              <a
+                href="https://wa.me/2348081159617?text=Hello%20ExamQuest%20Team%2C%20I%20need%20help%20with..."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block"
+              >
+                <div>
+                  <p className="font-semibold text-gray-900">
+                    Chat on WhatsApp
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Available Mon–Fri, 9am–6pm WAT
+                  </p>
+                </div>
+              </a>
             </Card>
             <Card padding="md" className="flex items-center gap-4">
               <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -108,12 +149,19 @@ export default function HelpPage() {
               </div>
               <div>
                 <p className="font-semibold text-gray-900">Email Support</p>
-                <p className="text-xs text-gray-500">support@examquest.ng</p>
+                <p className="text-xs text-gray-500 hover:text-gray-700 transition-colors">
+                  <a
+                    href="https://mail.google.com/mail/?view=cm&fs=1&to=supportexamquest@gmail.com&su=Support%20Request&body=Hello%20ExamQuest%20Team,"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    supportexamquest@gmail.com
+                  </a>
+                </p>
               </div>
             </Card>
           </div>
         </section>
-
       </div>
     </div>
   );

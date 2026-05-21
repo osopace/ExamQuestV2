@@ -1,4 +1,4 @@
-export type ExamType = "waec" | "utme" | "post_utme" | "university";
+export type ExamType = "wassce" | "neco" | "utme" | "post-utme" | "university";
 export type Theme = "light" | "dark" | "system";
 export type Difficulty = "easy" | "medium" | "hard" | "mixed";
 export type QuizStatus = "in_progress" | "completed" | "abandoned";
@@ -169,6 +169,6 @@ export interface SchoolCourse {
   course_id: string;
   name: string;
   description: string;
-  exam_type: string;
+  exam_type: ExamType;
   department: string;
 }

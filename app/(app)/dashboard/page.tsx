@@ -1,26 +1,58 @@
 "use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Flame, BookOpen, BarChart3, Trophy, Play, TrendingUp, Clock } from "lucide-react";
 import { Card } from "@/components/ui/index";
 import { ProgressBar } from "@/components/ui/index";
 import Topbar from "@/components/shared/Topbar";
-import { MOCK_QUIZ_HISTORY, COURSE_PROGRESS, COURSES } from "@/constants/mockData";
-import { formatRelativeDate, getScoreBg } from "@/utils/format";
-
-const STAT_CARDS = [
-  { icon: Flame, label: "Day Streak", value: "7 days", color: "text-orange-500", bg: "bg-orange-50" },
-  { icon: BarChart3, label: "Avg Score", value: "74%", color: "text-primary-600", bg: "bg-primary-50" },
-  { icon: BookOpen, label: "Quizzes Taken", value: "30", color: "text-green-600", bg: "bg-green-50" },
-  { icon: Trophy, label: "Leaderboard Rank", value: "#6", color: "text-amber-600", bg: "bg-amber-50" },
-];
-
-const RECOMMENDATIONS = [
-  { courseId: "csc101", reason: "Your score dropped 12% in Trees & Graphs — focus here first." },
-  { courseId: "alg101", reason: "You haven't practiced Algorithms in 4 days — keep your streak going." },
-];
+import { getUserQuizzes } from "@/supabase/db";
+import { formatRelativeDate, getScoreBg, getInitials } from "@/utils/format";
+import { useAuthStore } from "@/store/authStore";
+import type { Quiz } from "@/types";
 
 export default function DashboardPage() {
-  const recent = MOCK_QUIZ_HISTORY.slice(0, 4);
+  const { profile } = useAuthStore();
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!profile?.id) return;
+    getUserQuizzes(profile.id, 50)
+      .then(setQuizzes)
+      .catch(() => setQuizzes([]))
+      .finally(() => setLoading(false));
+  }, [profile?.id]);
+
+  const totalQuizzes = quizzes.length;
+  const avgScore = totalQuizzes > 0
+    ? Math.round(quizzes.reduce((s, q) => s + (q.score_percent ?? 0), 0) / totalQuizzes)
+    : 0;
+  const bestScore = totalQuizzes > 0
+    ? Math.max(...quizzes.map((q) => q.score_percent ?? 0))
+    : 0;
+
+  const enrolledIds = profile?.enrolled_course_ids ?? [];
+  const subjectQuizCounts: Record<string, number> = {};
+  quizzes.forEach((q) => {
+    subjectQuizCounts[q.course_id] = (subjectQuizCounts[q.course_id] ?? 0) + 1;
+  });
+
+  const continueItems = enrolledIds.map((id) => ({
+    id,
+    name: id.charAt(0).toUpperCase() + id.slice(1),
+    quizCount: subjectQuizCounts[id] ?? 0,
+  })).slice(0, 3);
+
+  const recentQuizzes = quizzes.slice(0, 4);
+
+  const STAT_CARDS = [
+    { icon: Flame, label: "Day Streak", value: `${profile?.current_streak ?? 0} days`, color: "text-orange-500", bg: "bg-orange-50" },
+    { icon: BarChart3, label: "Avg Score", value: totalQuizzes > 0 ? `${avgScore}%` : "—", color: "text-primary-600", bg: "bg-primary-50" },
+    { icon: BookOpen, label: "Quizzes Taken", value: String(totalQuizzes), color: "text-green-600", bg: "bg-green-50" },
+    { icon: Trophy, label: "Best Score", value: totalQuizzes > 0 ? `${bestScore}%` : "—", color: "text-amber-600", bg: "bg-amber-50" },
+  ];
+
+  const firstName = profile?.full_name?.split(" ")[0] ?? "there";
 
   return (
     <div>
@@ -30,8 +62,12 @@ export default function DashboardPage() {
         {/* Welcome */}
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Good morning, Student 👋</h2>
-            <p className="text-gray-600 mt-1">You're on a 7-day streak. Keep it up!</p>
+            <h2 className="text-2xl font-bold text-gray-900">Good day, {firstName} 👋</h2>
+            <p className="text-gray-600 mt-1">
+              {profile?.current_streak && profile.current_streak > 0
+                ? `You're on a ${profile.current_streak}-day streak. Keep it up!`
+                : "Start a quiz to begin your streak!"}
+            </p>
           </div>
           <Link href="/practice">
             <button className="flex items-center gap-2 bg-primary-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-primary-700 transition-colors">
@@ -58,70 +94,78 @@ export default function DashboardPage() {
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-gray-900 text-lg">Continue Learning</h3>
-              <Link href="/courses" className="text-sm text-primary-600 flex items-center gap-1 hover:gap-2 transition-all">View all <ArrowRight size={15} /></Link>
+              <Link href="/courses" className="text-sm text-primary-600 flex items-center gap-1 hover:gap-2 transition-all">
+                View all <ArrowRight size={15} />
+              </Link>
             </div>
-            <div className="space-y-3">
-              {COURSE_PROGRESS.map((cp) => (
-                <Card key={cp.course_id} padding="md" hoverable>
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <p className="font-semibold text-gray-900">{cp.course_name}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{cp.total_quizzes} quizzes · Avg {cp.average_score}%</p>
+
+            {continueItems.length === 0 ? (
+              <Card padding="md" className="text-center py-8">
+                <p className="text-gray-500 text-sm mb-3">No subjects enrolled yet.</p>
+                <Link href="/courses">
+                  <button className="text-sm text-primary-600 font-semibold hover:underline">Browse courses →</button>
+                </Link>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {continueItems.map((item) => (
+                  <Card key={item.id} padding="md" hoverable>
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <p className="font-semibold text-gray-900">{item.name}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{item.quizCount} quizzes taken</p>
+                      </div>
+                      <Link href={`/practice?course=${encodeURIComponent(item.id)}`}>
+                        <button className="w-9 h-9 bg-primary-50 rounded-xl flex items-center justify-center hover:bg-primary-100 transition-colors">
+                          <Play size={15} className="text-primary-600" />
+                        </button>
+                      </Link>
                     </div>
-                    <Link href={`/practice?course=${cp.course_id}`}>
-                      <button className="w-9 h-9 bg-primary-50 rounded-xl flex items-center justify-center hover:bg-primary-100 transition-colors">
-                        <Play size={15} className="text-primary-600" />
-                      </button>
-                    </Link>
-                  </div>
-                  <ProgressBar value={cp.progress_percent} showLabel />
-                </Card>
-              ))}
-            </div>
+                    <ProgressBar
+                      value={item.quizCount > 0 ? Math.min(100, item.quizCount * 10) : 0}
+                      showLabel
+                    />
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Sidebar panels */}
+          {/* Sidebar */}
           <div className="space-y-5">
-            {/* Streak */}
             <Card padding="md">
               <div className="flex items-center gap-2 mb-4">
                 <Flame size={18} className="text-orange-500" />
                 <h4 className="font-bold text-gray-900">Daily Streak</h4>
               </div>
-              <div className="flex gap-1.5 mb-3">
-                {["M","T","W","T","F","S","S"].map((d, i) => (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                    <div className={`w-full aspect-square rounded-lg flex items-center justify-center text-xs font-bold ${i < 5 ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-400"}`}>{i < 5 ? "✓" : d}</div>
-                    <span className="text-xs text-gray-400">{d}</span>
-                  </div>
-                ))}
+              <div className="text-center py-2">
+                <p className="text-4xl font-bold text-orange-500">{profile?.current_streak ?? 0}</p>
+                <p className="text-sm text-gray-500 mt-1">day{profile?.current_streak !== 1 ? "s" : ""} in a row</p>
+                {(profile?.longest_streak ?? 0) > 0 && (
+                  <p className="text-xs text-gray-400 mt-2">Best: {profile?.longest_streak} days</p>
+                )}
               </div>
-              <p className="text-sm text-gray-600">Keep going — 2 more days to your longest streak!</p>
             </Card>
 
-            {/* Recommendations */}
             <Card padding="md">
               <div className="flex items-center gap-2 mb-4">
                 <TrendingUp size={18} className="text-primary-600" />
-                <h4 className="font-bold text-gray-900">Recommended</h4>
+                <h4 className="font-bold text-gray-900">Quick Start</h4>
               </div>
-              <div className="space-y-3">
-                {RECOMMENDATIONS.map((r) => {
-                  const course = COURSES.find((c) => c.id === r.courseId);
-                  return (
-                    <Link key={r.courseId} href={`/practice?course=${r.courseId}`}>
-                      <div className="flex gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer">
-                        <div className="w-8 h-8 bg-primary-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <BookOpen size={14} className="text-primary-600" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-gray-900">{course?.name}</p>
-                          <p className="text-xs text-gray-500 leading-relaxed mt-0.5">{r.reason}</p>
-                        </div>
+              <div className="space-y-2">
+                {enrolledIds.slice(0, 3).map((id) => (
+                  <Link key={id} href={`/practice?course=${encodeURIComponent(id)}`}>
+                    <div className="flex gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer">
+                      <div className="w-8 h-8 bg-primary-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <BookOpen size={14} className="text-primary-600" />
                       </div>
-                    </Link>
-                  );
-                })}
+                      <p className="text-sm font-semibold text-gray-900 self-center capitalize">{id}</p>
+                    </div>
+                  </Link>
+                ))}
+                {enrolledIds.length === 0 && (
+                  <p className="text-sm text-gray-400 text-center py-3">Enrol in subjects to see quick links.</p>
+                )}
               </div>
             </Card>
           </div>
@@ -131,18 +175,27 @@ export default function DashboardPage() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold text-gray-900 text-lg">Recent Quizzes</h3>
-            <Link href="/quiz-history" className="text-sm text-primary-600 flex items-center gap-1">View all <ArrowRight size={15} /></Link>
+            <Link href="/quiz-history" className="text-sm text-primary-600 flex items-center gap-1">
+              View all <ArrowRight size={15} />
+            </Link>
           </div>
           <Card padding="none">
             <div className="divide-y divide-gray-50">
-              {recent.map((q) => (
+              {recentQuizzes.length === 0 && !loading && (
+                <div className="text-center py-12 text-gray-400">
+                  <BookOpen size={28} className="mx-auto mb-3 opacity-40" />
+                  <p className="text-sm font-medium">No quizzes yet</p>
+                  <p className="text-xs mt-1">Complete a quiz to see your history here.</p>
+                </div>
+              )}
+              {recentQuizzes.map((q) => (
                 <div key={q.id} className="flex items-center justify-between px-5 py-4">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 bg-primary-50 rounded-xl flex items-center justify-center flex-shrink-0">
                       <BookOpen size={16} className="text-primary-600" />
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-900 text-sm">{q.course_name}</p>
+                      <p className="font-semibold text-gray-900 text-sm capitalize">{q.course_name}</p>
                       <p className="text-xs text-gray-500 flex items-center gap-2 mt-0.5">
                         <span className="capitalize">{q.mode} mode</span>
                         <span>·</span>

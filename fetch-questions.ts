@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import ws from "ws";
 
 // ---- YOUR CREDENTIALS ----
 const ALOC_TOKEN = "ALOC-6738e12d462825eb8707";
@@ -25,11 +26,15 @@ const SUBJECTS: string[] = [
   "history",
 ];
 
-const EXAM_TYPES: string[] = ["waec", "utme", "post-utme"];
+const EXAM_TYPES: string[] = ["wassce", "utme", "post-utme", "neco"];
 const YEARS: number[] = Array.from({ length: 30 }, (_, i) => 1993 + i);
 const DELAY_MS = 500;
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+  realtime: {
+    transport: ws as any,
+  },
+});
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function fetchFromALOC(subject: string, examType: string, year: number) {
@@ -55,14 +60,19 @@ async function fetchFromALOC(subject: string, examType: string, year: number) {
   }
 }
 
-async function saveBatch(questions: any[]) {
+async function saveBatch(
+  questions: any[],
+  subject: string,
+  examType: string,
+  year: number,
+) {
   if (questions.length === 0) return;
 
   const rows = questions.map((q) => ({
     aloc_id: String(q.id),
-    subject: q.subject?.toLowerCase() || "",
-    exam_type: q.examtype?.toLowerCase() || q.type?.toLowerCase() || "",
-    year: parseInt(q.year) || null,
+    subject: subject, // 👈 use the loop variable directly
+    exam_type: examType, // 👈 use the loop variable directly
+    year: year, // 👈 use the loop variable directly
     question_text: q.question || "",
     option_a: q.option?.a || null,
     option_b: q.option?.b || null,
@@ -74,9 +84,9 @@ async function saveBatch(questions: any[]) {
 
   const { error } = await supabase
     .from("questions")
-    .upsert(rows, { onConflict: "aloc_id" });
+    .upsert(rows, { onConflict: "aloc_id,subject,exam_type", ignoreDuplicates: true });
 
-  if (error) console.error("  ❌ Supabase error:", error.message);
+  if (error) throw new Error(error.message);
 }
 
 async function main() {
@@ -92,11 +102,16 @@ async function main() {
         process.stdout.write(
           `[${current}/${totalCombinations}] ${subject}/${examType}/${year}... `,
         );
+
         const questions = await fetchFromALOC(subject, examType, year);
         if (questions.length > 0) {
-          await saveBatch(questions);
-          totalSaved += questions.length;
-          console.log(`✅ ${questions.length} saved`);
+          try {
+            await saveBatch(questions, subject, examType, year);
+            totalSaved += questions.length;
+            console.log(`✅ ${questions.length} processed`);
+          } catch (err: any) {
+            console.error(`  ❌ DB error: ${err.message}`);
+          }
         } else {
           console.log("(no results)");
         }
@@ -104,7 +119,7 @@ async function main() {
       }
     }
   }
-  console.log(`\n🎉 Done! Total questions saved: ${totalSaved}`);
+  console.log(`\n🎉 Done! Total questions processed: ${totalSaved}`);
 }
 
 main().catch(console.error);
