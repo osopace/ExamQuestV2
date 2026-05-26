@@ -11,8 +11,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (loading) return;
-    if (!profile) { router.replace("/login"); return; }
-    if (!profile.onboarding_complete) { router.replace("/onboarding"); return; }
+    if (!profile) {
+      router.replace("/login");
+      return;
+    }
+    if (!profile.onboarding_complete) {
+      router.replace("/onboarding");
+      return;
+    }
   }, [profile, loading, router]);
 
   if (loading || !profile || !profile.onboarding_complete) {
@@ -26,7 +32,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar />
-      <div className="flex-1 md:ml-64">{children}</div>
+
+      <div className="flex-1 md:ml-60">{children}</div>
     </div>
   );
 }

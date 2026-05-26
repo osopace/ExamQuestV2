@@ -1,5 +1,11 @@
 import { supabase } from "./client";
-import type { Profile, Quiz, Bookmark, UserSettings, AppNotification } from "@/types";
+import type {
+  Profile,
+  Quiz,
+  Bookmark,
+  UserSettings,
+  AppNotification,
+} from "@/types";
 
 /* ── Profiles ── */
 export async function updateProfile(userId: string, data: Partial<Profile>) {
@@ -11,7 +17,10 @@ export async function updateProfile(userId: string, data: Partial<Profile>) {
 }
 
 /* ── Avatar ── */
-export async function uploadAvatar(userId: string, file: File): Promise<string> {
+export async function uploadAvatar(
+  userId: string,
+  file: File,
+): Promise<string> {
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
   const path = `${userId}/avatar.${ext}`;
 
@@ -39,7 +48,7 @@ export async function getCourses() {
 // Fetches subjects for WAEC, UTME or Post-UTME from their Supabase tables
 // e.g. "wassce" → "wassce_subjects", "utme" → "utme_subjects"
 export async function getExamSubjects(
-  examType: "wassce" | "neco" | "utme" | "post-utme"
+  examType: "wassce" | "neco" | "utme" | "post-utme",
 ) {
   const { data, error } = await supabase
     .from("questions")
@@ -120,7 +129,9 @@ export async function getSubjectQuestions(
 ) {
   const { data, error } = await supabase
     .from("questions")
-    .select("id, subject, exam_type, year, question_text, option_a, option_b, option_c, option_d, correct, explanation")
+    .select(
+      "id, subject, exam_type, year, question_text, option_a, option_b, option_c, option_d, correct, explanation",
+    )
     .eq("subject", subject)
     .eq("exam_type", examType)
     .limit(300);
@@ -136,12 +147,34 @@ export async function getSubjectQuestions(
       question_text: row.question_text,
       difficulty: "mixed" as const,
       explanation: row.explanation ?? "",
-      exam_source: row.year ? `${row.exam_type.toUpperCase()} ${row.year}` : undefined,
+      exam_source: row.year
+        ? `${row.exam_type.toUpperCase()} ${row.year}`
+        : undefined,
       options: [
-        { id: `${row.id}-A`, label: "A" as const, text: row.option_a ?? "", is_correct: correctLetter === "A" },
-        { id: `${row.id}-B`, label: "B" as const, text: row.option_b ?? "", is_correct: correctLetter === "B" },
-        { id: `${row.id}-C`, label: "C" as const, text: row.option_c ?? "", is_correct: correctLetter === "C" },
-        { id: `${row.id}-D`, label: "D" as const, text: row.option_d ?? "", is_correct: correctLetter === "D" },
+        {
+          id: `${row.id}-A`,
+          label: "A" as const,
+          text: row.option_a ?? "",
+          is_correct: correctLetter === "A",
+        },
+        {
+          id: `${row.id}-B`,
+          label: "B" as const,
+          text: row.option_b ?? "",
+          is_correct: correctLetter === "B",
+        },
+        {
+          id: `${row.id}-C`,
+          label: "C" as const,
+          text: row.option_c ?? "",
+          is_correct: correctLetter === "C",
+        },
+        {
+          id: `${row.id}-D`,
+          label: "D" as const,
+          text: row.option_d ?? "",
+          is_correct: correctLetter === "D",
+        },
       ].filter((o) => o.text !== ""),
     } as import("@/types").Question;
   });
@@ -149,7 +182,10 @@ export async function getSubjectQuestions(
   return shuffleArray(mapped).slice(0, count);
 }
 
-export async function getSubjectQuestionCount(subject: string, examType: string) {
+export async function getSubjectQuestionCount(
+  subject: string,
+  examType: string,
+) {
   const { count, error } = await supabase
     .from("questions")
     .select("*", { count: "exact", head: true })
@@ -213,10 +249,25 @@ export async function getUserQuizzes(userId: string, limit = 50) {
 }
 
 /* ── Bookmarks ── */
-export async function addBookmark(userId: string, questionId: string, subject: string, examType: string, note?: string) {
+export async function addBookmark(
+  userId: string,
+  questionId: string,
+  subject: string,
+  examType: string,
+  note?: string,
+) {
   const { error } = await supabase
     .from("bookmarks")
-    .upsert({ user_id: userId, question_id: questionId, subject, exam_type: examType, note }, { onConflict: "user_id,question_id" });
+    .upsert(
+      {
+        user_id: userId,
+        question_id: questionId,
+        subject,
+        exam_type: examType,
+        note,
+      },
+      { onConflict: "user_id,question_id" },
+    );
   if (error) throw error;
 }
 
@@ -236,7 +287,15 @@ export async function getUserBookmarks(userId: string) {
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return data as { id: string; user_id: string; question_id: string; subject: string; exam_type: string; note?: string; created_at: string }[];
+  return data as {
+    id: string;
+    user_id: string;
+    question_id: string;
+    subject: string;
+    exam_type: string;
+    note?: string;
+    created_at: string;
+  }[];
 }
 
 export async function getQuestionsByIds(ids: string[]) {
@@ -245,10 +304,18 @@ export async function getQuestionsByIds(ids: string[]) {
     .from("questions")
     .select("id, question_text, subject, exam_type")
     .in("id", ids);
-  return (data ?? []) as { id: number; question_text: string; subject: string; exam_type: string }[];
+  return (data ?? []) as {
+    id: number;
+    question_text: string;
+    subject: string;
+    exam_type: string;
+  }[];
 }
 
-export async function isBookmarked(userId: string, questionId: string): Promise<boolean> {
+export async function isBookmarked(
+  userId: string,
+  questionId: string,
+): Promise<boolean> {
   const { count } = await supabase
     .from("bookmarks")
     .select("*", { count: "exact", head: true })
@@ -275,26 +342,33 @@ export async function updateStreak(userId: string) {
   if (lastActive === today) return;
 
   const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
-  const newStreak = lastActive === yesterday ? (profile.current_streak ?? 0) + 1 : 1;
+  const newStreak =
+    lastActive === yesterday ? (profile.current_streak ?? 0) + 1 : 1;
   const newLongest = Math.max(profile.longest_streak ?? 0, newStreak);
 
-  await supabase.from("profiles").update({
-    current_streak: newStreak,
-    longest_streak: newLongest,
-    last_active_date: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  }).eq("id", userId);
+  await supabase
+    .from("profiles")
+    .update({
+      current_streak: newStreak,
+      longest_streak: newLongest,
+      last_active_date: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userId);
 }
 
 /* ── Leaderboard ── */
 export async function getLeaderboard(limit = 50) {
-  const { data, error } = await supabase.rpc("get_leaderboard", { limit_count: limit });
+  const { data, error } = await supabase.rpc("get_leaderboard", {
+    limit_count: limit,
+  });
   if (error) throw error;
   return (data ?? []) as {
     user_id: string;
     full_name: string;
     streak: number;
     quizzes_completed: number;
+
     score: number | null; // null when user has "Show Progress" disabled
   }[];
 }
@@ -322,7 +396,10 @@ export async function upsertUserSettings(
 }
 
 /* ── Notifications ── */
-export async function getNotifications(userId: string, limit = 20): Promise<AppNotification[]> {
+export async function getNotifications(
+  userId: string,
+  limit = 20,
+): Promise<AppNotification[]> {
   const { data } = await supabase
     .from("notifications")
     .select("*")

@@ -9,8 +9,10 @@ import { useQuizStore } from "@/store/quizStore";
 import { useAuthStore } from "@/store/authStore";
 import { getSubjectQuestions } from "@/supabase/db";
 import { getTerm } from "@/utils/terminology";
+
 import { cn } from "@/utils/cn";
 import type { Difficulty, QuizMode, ExamType } from "@/types";
+
 import toast from "react-hot-toast";
 
 const EXAM_LABELS: Record<string, string> = {
@@ -37,6 +39,7 @@ export default function PracticePage() {
   const { profile } = useAuthStore();
 
   const enrolledIds = profile?.enrolled_course_ids ?? [];
+
   const examTypes: ExamType[] =
     profile?.exam_types?.length
       ? (profile.exam_types as ExamType[])
@@ -54,6 +57,7 @@ export default function PracticePage() {
     ? [urlCourse, ...enrolledIds]
     : enrolledIds;
   const [selectedExamType, setSelectedExamType] = useState<ExamType>(examTypes[0] ?? "wassce");
+
   const [mode, setMode] = useState<QuizMode>("quiz");
   const [difficulty, setDifficulty] = useState<Difficulty>("mixed");
   const [count, setCount] = useState(20);
@@ -61,6 +65,7 @@ export default function PracticePage() {
   const [starting, setStarting] = useState(false);
 
   useEffect(() => {
+
     if (urlCourse) setCourseId(urlCourse);
   }, [urlCourse]);
 
@@ -75,11 +80,14 @@ export default function PracticePage() {
     if (!courseId) { toast.error(`Please select a ${termSingular.toLowerCase()}`); return; }
     if (!profile) return;
 
+
     setStarting(true);
     try {
       const questions = await getSubjectQuestions(
         courseId,
+
         selectedExamType,
+
         count,
         difficulty,
       );
@@ -158,6 +166,7 @@ export default function PracticePage() {
           </div>
         </Card>
 
+
         {/* Exam type toggle — shown only when user has 2 exam types */}
         {examTypes.length > 1 && (
           <Card padding="md">
@@ -187,7 +196,7 @@ export default function PracticePage() {
           </Card>
         )}
 
-        {/* Subject selector */}
+
         <Card padding="md">
           <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
             <BookOpen size={18} className="text-primary-600" />
@@ -198,7 +207,9 @@ export default function PracticePage() {
             onChange={(e) => setCourseId(e.target.value)}
             className="w-full h-11 rounded-xl border border-gray-200 px-4 text-sm focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 bg-white"
           >
+
             {courseOptions.map((id) => (
+
               <option key={id} value={id}>
                 {subjectName(id)}
               </option>

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+
 import { Trophy, Flame, BookOpen, Medal, Loader2, EyeOff } from "lucide-react";
 import { Card, Avatar, Badge } from "@/components/ui/index";
 import Topbar from "@/components/shared/Topbar";
@@ -8,11 +9,14 @@ import { getLeaderboard, getUserSettings } from "@/supabase/db";
 import { useAuthStore } from "@/store/authStore";
 import Link from "next/link";
 
+
 type Entry = {
   rank: number;
   user_id: string;
   full_name: string;
+
   score: number | null;
+
   quizzes_completed: number;
   streak: number;
   is_current_user?: boolean;
@@ -32,6 +36,7 @@ export default function LeaderboardPage() {
   const { profile } = useAuthStore();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [isHidden, setIsHidden] = useState(false);
 
   useEffect(() => {
@@ -42,10 +47,12 @@ export default function LeaderboardPage() {
       getUserSettings(profile.id),
     ])
       .then(([data, settings]) => {
+
         setEntries(
           data.map((e, i) => ({
             ...e,
             rank: i + 1,
+
             is_current_user: e.user_id === profile.id,
           }))
         );
@@ -54,6 +61,7 @@ export default function LeaderboardPage() {
           setIsHidden(true);
         }
       })
+
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [profile?.id]);
@@ -93,6 +101,7 @@ export default function LeaderboardPage() {
             <Loader2 size={18} className="animate-spin" />
             <span className="text-sm">Loading leaderboard...</span>
           </div>
+
         ) : entries.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
             <Trophy size={36} className="mx-auto mb-3 opacity-30" />
@@ -109,7 +118,9 @@ export default function LeaderboardPage() {
                   <Medal size={18} className={`mx-auto mb-2 ${MEDAL_COLORS[1]}`} />
                   <Avatar name={top3[1].full_name} size="sm" className="mx-auto mb-2" />
                   <p className="font-bold text-gray-900 text-xs truncate">{top3[1].full_name}</p>
+
                   <ScoreDisplay score={top3[1].score} className="text-sm font-bold text-gray-700 mt-1 block" />
+
                   <p className="text-xs text-gray-400">pts</p>
                 </div>
                 {/* 1st */}
@@ -117,7 +128,9 @@ export default function LeaderboardPage() {
                   <Medal size={22} className={`mx-auto mb-2 ${MEDAL_COLORS[0]}`} />
                   <Avatar name={top3[0].full_name} size="md" className="mx-auto mb-2" />
                   <p className="font-bold text-gray-900 text-sm truncate">{top3[0].full_name}</p>
+
                   <ScoreDisplay score={top3[0].score} className="text-base font-bold text-amber-600 mt-1 block" />
+
                   <p className="text-xs text-gray-400">pts · #1</p>
                 </div>
                 {/* 3rd */}
@@ -125,7 +138,9 @@ export default function LeaderboardPage() {
                   <Medal size={18} className={`mx-auto mb-2 ${MEDAL_COLORS[2]}`} />
                   <Avatar name={top3[2].full_name} size="sm" className="mx-auto mb-2" />
                   <p className="font-bold text-gray-900 text-xs truncate">{top3[2].full_name}</p>
+
                   <ScoreDisplay score={top3[2].score} className="text-sm font-bold text-gray-700 mt-1 block" />
+
                   <p className="text-xs text-gray-400">pts</p>
                 </div>
               </div>
@@ -170,10 +185,12 @@ export default function LeaderboardPage() {
                         </span>
                       </div>
                     </div>
+
                     <ScoreDisplay
                       score={entry.score}
                       className="text-sm font-bold text-gray-900 flex-shrink-0"
                     />
+
                   </div>
                 ))}
               </div>

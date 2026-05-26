@@ -8,21 +8,26 @@ import { getSubjectQuestionCount } from "@/supabase/db";
 import { useAuthStore } from "@/store/authStore";
 import { getTerm } from "@/utils/terminology";
 
+
 function toTitleCase(str: string) {
   return str.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+
 export default function CourseDetailPage({ params }: { params: { id: string } }) {
   const { profile, loading: profileLoading } = useAuthStore();
   const subjectId = decodeURIComponent(params.id).toLowerCase();
+
   const subjectName = toTitleCase(subjectId);
   const examType = profile?.exam_type ?? profile?.exam_types?.[0] ?? null;
   const term = getTerm(examType ?? undefined);
+
 
   const [questionCount, setQuestionCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+
     if (!examType) {
       setLoading(false);
       return;
@@ -32,6 +37,8 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
       .then((count) => setQuestionCount(count))
       .finally(() => setLoading(false));
   }, [subjectId, examType]);
+
+ 
 
   if (profileLoading) {
     return (
@@ -65,7 +72,10 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-2">
                 <Badge variant="primary">
+
                   {examType ? examType.toUpperCase().replace("-", " ") : "—"}
+
+                
                 </Badge>
               </div>
               <h1 className="text-2xl font-bold text-gray-900 mb-4">{subjectName}</h1>
