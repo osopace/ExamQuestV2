@@ -9,8 +9,17 @@ import { useQuizStore } from "@/store/quizStore";
 import { useAuthStore } from "@/store/authStore";
 import { getSubjectQuestions } from "@/supabase/db";
 import { getTerm } from "@/utils/terminology";
-import type { Difficulty, QuizMode } from "@/types";
+import { cn } from "@/utils/cn";
+import type { Difficulty, QuizMode, ExamType } from "@/types";
 import toast from "react-hot-toast";
+
+const EXAM_LABELS: Record<string, string> = {
+  wassce: "WAEC",
+  neco: "NECO",
+  utme: "JAMB UTME",
+  "post-utme": "Post-UTME",
+  university: "University",
+};
 
 const DIFFICULTIES: { id: Difficulty; label: string; desc: string }[] = [
   { id: "easy", label: "Easy", desc: "Build confidence" },
@@ -28,10 +37,23 @@ export default function PracticePage() {
   const { profile } = useAuthStore();
 
   const enrolledIds = profile?.enrolled_course_ids ?? [];
+  const examTypes: ExamType[] =
+    profile?.exam_types?.length
+      ? (profile.exam_types as ExamType[])
+      : profile?.exam_type
+      ? [profile.exam_type]
+      : [];
   const termSingular = getTerm(profile?.exam_type, false);
 
-  const initialCourse = searchParams.get("course") ?? enrolledIds[0] ?? "";
+  const urlCourse = searchParams.get("course") ?? "";
+  const initialCourse = urlCourse || enrolledIds[0] || "";
   const [courseId, setCourseId] = useState(initialCourse);
+
+  // Merge URL course into options so it's always selectable even if not enrolled
+  const courseOptions = urlCourse && !enrolledIds.includes(urlCourse)
+    ? [urlCourse, ...enrolledIds]
+    : enrolledIds;
+  const [selectedExamType, setSelectedExamType] = useState<ExamType>(examTypes[0] ?? "wassce");
   const [mode, setMode] = useState<QuizMode>("quiz");
   const [difficulty, setDifficulty] = useState<Difficulty>("mixed");
   const [count, setCount] = useState(20);
@@ -39,12 +61,15 @@ export default function PracticePage() {
   const [starting, setStarting] = useState(false);
 
   useEffect(() => {
-    const fromUrl = searchParams.get("course");
-    if (fromUrl) setCourseId(fromUrl);
-  }, [searchParams]);
+    if (urlCourse) setCourseId(urlCourse);
+  }, [urlCourse]);
+
+  useEffect(() => {
+    if (examTypes[0]) setSelectedExamType(examTypes[0]);
+  }, [profile?.exam_type, profile?.exam_types]);
 
   const subjectName = (id: string) =>
-    id.charAt(0).toUpperCase() + id.slice(1);
+    id.replace(/\b\w/g, (c) => c.toUpperCase());
 
   const handleStart = async () => {
     if (!courseId) { toast.error(`Please select a ${termSingular.toLowerCase()}`); return; }
@@ -54,7 +79,7 @@ export default function PracticePage() {
     try {
       const questions = await getSubjectQuestions(
         courseId,
-        profile.exam_type ?? "",
+        selectedExamType,
         count,
         difficulty,
       );
@@ -89,7 +114,7 @@ export default function PracticePage() {
     }
   };
 
-  if (enrolledIds.length === 0) {
+  if (enrolledIds.length === 0 && !urlCourse) {
     return (
       <div>
         <Topbar title="Practice" />
@@ -133,6 +158,35 @@ export default function PracticePage() {
           </div>
         </Card>
 
+        {/* Exam type toggle — shown only when user has 2 exam types */}
+        {examTypes.length > 1 && (
+          <Card padding="md">
+            <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+              <Target size={18} className="text-primary-600" />
+              Exam Type
+            </h2>
+            <div className="flex gap-2">
+              {examTypes.map((et) => (
+                <button
+                  key={et}
+                  onClick={() => setSelectedExamType(et)}
+                  className={cn(
+                    "flex-1 py-2.5 px-3 rounded-xl border-2 text-sm font-semibold transition-all",
+                    selectedExamType === et
+                      ? "border-primary-500 bg-primary-50 text-primary-700"
+                      : "border-gray-200 text-gray-600 hover:border-primary-200"
+                  )}
+                >
+                  {EXAM_LABELS[et] ?? et.toUpperCase()}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 mt-2">
+              Questions will be fetched from the <span className="font-medium text-gray-600">{EXAM_LABELS[selectedExamType]}</span> question bank.
+            </p>
+          </Card>
+        )}
+
         {/* Subject selector */}
         <Card padding="md">
           <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
@@ -144,7 +198,7 @@ export default function PracticePage() {
             onChange={(e) => setCourseId(e.target.value)}
             className="w-full h-11 rounded-xl border border-gray-200 px-4 text-sm focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 bg-white"
           >
-            {enrolledIds.map((id) => (
+            {courseOptions.map((id) => (
               <option key={id} value={id}>
                 {subjectName(id)}
               </option>

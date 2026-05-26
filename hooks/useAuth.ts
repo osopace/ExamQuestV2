@@ -15,7 +15,7 @@ export function useAuth() {
       }
       try {
         const p = await getProfile(session.user.id);
-        setProfile(p);
+        setProfile(p ? { ...p, email: session.user.email ?? p.email } : null);
       } catch {
         setProfile(null);
       }

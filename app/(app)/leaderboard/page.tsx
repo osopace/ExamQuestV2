@@ -1,17 +1,18 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Trophy, Flame, BookOpen, Medal, Loader2 } from "lucide-react";
+import { Trophy, Flame, BookOpen, Medal, Loader2, EyeOff } from "lucide-react";
 import { Card, Avatar, Badge } from "@/components/ui/index";
 import Topbar from "@/components/shared/Topbar";
 import { cn } from "@/utils/cn";
-import { getLeaderboard } from "@/supabase/db";
+import { getLeaderboard, getUserSettings } from "@/supabase/db";
 import { useAuthStore } from "@/store/authStore";
+import Link from "next/link";
 
 type Entry = {
   rank: number;
   user_id: string;
   full_name: string;
-  score: number;
+  score: number | null;
   quizzes_completed: number;
   streak: number;
   is_current_user?: boolean;
@@ -20,22 +21,39 @@ type Entry = {
 const MEDAL_COLORS = ["text-amber-400", "text-gray-400", "text-amber-600"];
 const PODIUM_BG = ["bg-amber-50 border-amber-200", "bg-gray-50 border-gray-200", "bg-orange-50 border-orange-200"];
 
+function ScoreDisplay({ score, className }: { score: number | null; className?: string }) {
+  if (score === null) {
+    return <span className={cn("text-gray-400 font-semibold", className)}>—</span>;
+  }
+  return <span className={className}>{score.toLocaleString()} pts</span>;
+}
+
 export default function LeaderboardPage() {
   const { profile } = useAuthStore();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isHidden, setIsHidden] = useState(false);
 
   useEffect(() => {
-    getLeaderboard(50)
-      .then((data) =>
+    if (!profile) return;
+
+    Promise.all([
+      getLeaderboard(50),
+      getUserSettings(profile.id),
+    ])
+      .then(([data, settings]) => {
         setEntries(
           data.map((e, i) => ({
             ...e,
             rank: i + 1,
-            is_current_user: e.user_id === profile?.id,
+            is_current_user: e.user_id === profile.id,
           }))
-        )
-      )
+        );
+        // profile_visibility defaults to true if no settings row yet
+        if (settings && settings.profile_visibility === false) {
+          setIsHidden(true);
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [profile?.id]);
@@ -55,6 +73,20 @@ export default function LeaderboardPage() {
           <h2 className="text-xl font-bold text-gray-900">Nigeria Top Students</h2>
           <p className="text-sm text-gray-500 mt-1">Updated live · 10 pts per correct answer + streak bonus</p>
         </div>
+
+        {/* Privacy banner — shown when current user has hidden their profile */}
+        {isHidden && (
+          <div className="flex items-start gap-3 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3.5">
+            <EyeOff size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-700">Your profile is hidden from this leaderboard</p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Turn on <span className="font-medium">Public Profile</span> in{" "}
+                <Link href="/settings" className="text-primary-600 hover:underline">Settings → Privacy</Link> to appear here.
+              </p>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center py-20 gap-2 text-gray-400">
@@ -77,7 +109,7 @@ export default function LeaderboardPage() {
                   <Medal size={18} className={`mx-auto mb-2 ${MEDAL_COLORS[1]}`} />
                   <Avatar name={top3[1].full_name} size="sm" className="mx-auto mb-2" />
                   <p className="font-bold text-gray-900 text-xs truncate">{top3[1].full_name}</p>
-                  <p className="text-sm font-bold text-gray-700 mt-1">{top3[1].score.toLocaleString()}</p>
+                  <ScoreDisplay score={top3[1].score} className="text-sm font-bold text-gray-700 mt-1 block" />
                   <p className="text-xs text-gray-400">pts</p>
                 </div>
                 {/* 1st */}
@@ -85,7 +117,7 @@ export default function LeaderboardPage() {
                   <Medal size={22} className={`mx-auto mb-2 ${MEDAL_COLORS[0]}`} />
                   <Avatar name={top3[0].full_name} size="md" className="mx-auto mb-2" />
                   <p className="font-bold text-gray-900 text-sm truncate">{top3[0].full_name}</p>
-                  <p className="text-base font-bold text-amber-600 mt-1">{top3[0].score.toLocaleString()}</p>
+                  <ScoreDisplay score={top3[0].score} className="text-base font-bold text-amber-600 mt-1 block" />
                   <p className="text-xs text-gray-400">pts · #1</p>
                 </div>
                 {/* 3rd */}
@@ -93,7 +125,7 @@ export default function LeaderboardPage() {
                   <Medal size={18} className={`mx-auto mb-2 ${MEDAL_COLORS[2]}`} />
                   <Avatar name={top3[2].full_name} size="sm" className="mx-auto mb-2" />
                   <p className="font-bold text-gray-900 text-xs truncate">{top3[2].full_name}</p>
-                  <p className="text-sm font-bold text-gray-700 mt-1">{top3[2].score.toLocaleString()}</p>
+                  <ScoreDisplay score={top3[2].score} className="text-sm font-bold text-gray-700 mt-1 block" />
                   <p className="text-xs text-gray-400">pts</p>
                 </div>
               </div>
@@ -138,9 +170,10 @@ export default function LeaderboardPage() {
                         </span>
                       </div>
                     </div>
-                    <span className="text-sm font-bold text-gray-900 flex-shrink-0">
-                      {entry.score.toLocaleString()} pts
-                    </span>
+                    <ScoreDisplay
+                      score={entry.score}
+                      className="text-sm font-bold text-gray-900 flex-shrink-0"
+                    />
                   </div>
                 ))}
               </div>

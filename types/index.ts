@@ -10,6 +10,7 @@ export interface Profile {
   email: string;
   avatar_url?: string;
   exam_type?: ExamType;
+  exam_types?: ExamType[];
   school_id?: string;
   school_name?: string;
   enrolled_course_ids: string[];
@@ -156,6 +157,16 @@ export interface LeaderboardEntry {
 export interface ScoreOverTime {
   date: string;
   score: number;
+}
+
+export interface AppNotification {
+  id: string;
+  user_id: string;
+  type: "quiz_reminder" | "study_reminder" | "performance_digest";
+  title: string;
+  body: string;
+  read: boolean;
+  created_at: string;
 }
 
 export interface TopicAnalytics {

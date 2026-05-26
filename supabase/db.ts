@@ -1,5 +1,5 @@
 import { supabase } from "./client";
-import type { Profile, Quiz, Bookmark, UserSettings } from "@/types";
+import type { Profile, Quiz, Bookmark, UserSettings, AppNotification } from "@/types";
 
 /* ── Profiles ── */
 export async function updateProfile(userId: string, data: Partial<Profile>) {
@@ -7,7 +7,23 @@ export async function updateProfile(userId: string, data: Partial<Profile>) {
     .from("profiles")
     .update({ ...data, updated_at: new Date().toISOString() })
     .eq("id", userId);
-  if (error) throw error;
+  if (error) throw new Error(error.message);
+}
+
+/* ── Avatar ── */
+export async function uploadAvatar(userId: string, file: File): Promise<string> {
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+  const path = `${userId}/avatar.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("avatars")
+    .upload(path, file, { upsert: true, contentType: file.type });
+
+  if (uploadError) throw new Error(uploadError.message);
+
+  const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+  // Bust cache so the browser fetches the new image
+  return `${data.publicUrl}?t=${Date.now()}`;
 }
 
 /* ── Courses ── */
@@ -279,7 +295,7 @@ export async function getLeaderboard(limit = 50) {
     full_name: string;
     streak: number;
     quizzes_completed: number;
-    score: number;
+    score: number | null; // null when user has "Show Progress" disabled
   }[];
 }
 
@@ -303,4 +319,27 @@ export async function upsertUserSettings(
     .from("user_settings")
     .upsert({ user_id: userId, ...settings });
   if (error) throw error;
+}
+
+/* ── Notifications ── */
+export async function getNotifications(userId: string, limit = 20): Promise<AppNotification[]> {
+  const { data } = await supabase
+    .from("notifications")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return (data ?? []) as AppNotification[];
+}
+
+export async function markAllNotificationsRead(userId: string) {
+  await supabase
+    .from("notifications")
+    .update({ read: true })
+    .eq("user_id", userId)
+    .eq("read", false);
+}
+
+export async function deleteNotification(id: string) {
+  await supabase.from("notifications").delete().eq("id", id);
 }

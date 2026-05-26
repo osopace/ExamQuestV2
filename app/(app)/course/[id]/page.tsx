@@ -8,22 +8,30 @@ import { getSubjectQuestionCount } from "@/supabase/db";
 import { useAuthStore } from "@/store/authStore";
 import { getTerm } from "@/utils/terminology";
 
+function toTitleCase(str: string) {
+  return str.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export default function CourseDetailPage({ params }: { params: { id: string } }) {
   const { profile, loading: profileLoading } = useAuthStore();
   const subjectId = decodeURIComponent(params.id).toLowerCase();
-  const subjectName = subjectId.charAt(0).toUpperCase() + subjectId.slice(1);
-  const term = getTerm(profile?.exam_type);
+  const subjectName = toTitleCase(subjectId);
+  const examType = profile?.exam_type ?? profile?.exam_types?.[0] ?? null;
+  const term = getTerm(examType ?? undefined);
 
   const [questionCount, setQuestionCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!profile?.exam_type) return;
+    if (!examType) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
-    getSubjectQuestionCount(subjectId, profile.exam_type)
+    getSubjectQuestionCount(subjectId, examType)
       .then((count) => setQuestionCount(count))
       .finally(() => setLoading(false));
-  }, [subjectId, profile?.exam_type]);
+  }, [subjectId, examType]);
 
   if (profileLoading) {
     return (
@@ -57,7 +65,7 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-2">
                 <Badge variant="primary">
-                  {profile?.exam_type ? profile.exam_type.toUpperCase().replace("-", " ") : "—"}
+                  {examType ? examType.toUpperCase().replace("-", " ") : "—"}
                 </Badge>
               </div>
               <h1 className="text-2xl font-bold text-gray-900 mb-4">{subjectName}</h1>
