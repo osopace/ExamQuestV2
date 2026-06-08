@@ -130,7 +130,7 @@ export async function getSubjectQuestions(
   const { data, error } = await supabase
     .from("questions")
     .select(
-      "id, subject, exam_type, year, question_text, option_a, option_b, option_c, option_d, correct, explanation",
+      "id, subject, exam_type, year, question_text, option_a, option_b, option_c, option_d, correct, explanation, ai_explanation, topic_id, difficulty, school_id",
     )
     .eq("subject", subject)
     .eq("exam_type", examType)
@@ -144,9 +144,12 @@ export async function getSubjectQuestions(
       id: String(row.id),
       course_id: row.subject,
       course_name: row.subject,
+      topic_id: row.topic_id,
       question_text: row.question_text,
-      difficulty: "mixed" as const,
-      explanation: row.explanation ?? "",
+      difficulty: (row.difficulty as any) ?? "medium",
+      // Professional Fallback: Use Human explanation if it exists, otherwise use AI
+      explanation: row.explanation || row.ai_explanation || "",
+      school_id: row.school_id,
       exam_source: row.year
         ? `${row.exam_type.toUpperCase()} ${row.year}`
         : undefined,
@@ -256,18 +259,16 @@ export async function addBookmark(
   examType: string,
   note?: string,
 ) {
-  const { error } = await supabase
-    .from("bookmarks")
-    .upsert(
-      {
-        user_id: userId,
-        question_id: questionId,
-        subject,
-        exam_type: examType,
-        note,
-      },
-      { onConflict: "user_id,question_id" },
-    );
+  const { error } = await supabase.from("bookmarks").upsert(
+    {
+      user_id: userId,
+      question_id: questionId,
+      subject,
+      exam_type: examType,
+      note,
+    },
+    { onConflict: "user_id,question_id" },
+  );
   if (error) throw error;
 }
 
@@ -419,4 +420,39 @@ export async function markAllNotificationsRead(userId: string) {
 
 export async function deleteNotification(id: string) {
   await supabase.from("notifications").delete().eq("id", id);
+}
+
+/* ── Weak Topics Intelligence ── */
+
+/**
+ * Fetches topics where the user has low accuracy (< 60%)
+ * used to power the "Weak Topics" remedial practice mode.
+ */
+export async function getUserWeakTopics(userId: string, subject?: string) {
+  let query = supabase
+    .from("user_topic_mastery")
+    .select(
+      `
+      topic_id,
+      subject_id,
+      correct_count,
+      total_attempts,
+      topics (name)
+    `,
+    )
+    .eq("user_id", userId)
+    .gt("total_attempts", 5) // Only flag after a fair sample size
+    .order("last_practiced_at", { ascending: false });
+
+  if (subject) {
+    query = query.eq("subject_id", subject);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  // Filter for accuracy < 60% in application logic for flexibility
+  return (data ?? []).filter(
+    (stat) => stat.correct_count / stat.total_attempts < 0.6,
+  );
 }

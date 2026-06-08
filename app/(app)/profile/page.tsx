@@ -18,7 +18,6 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { Card, Avatar, Badge, Modal } from "@/components/ui/index";
 import Topbar from "@/components/shared/Topbar";
-import { SCHOOLS } from "@/constants/mockData";
 
 import { updateProfile, uploadAvatar } from "@/supabase/db";
 import { supabase } from "@/supabase/client";
