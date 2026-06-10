@@ -1,4 +1,4 @@
-export type ExamType = "wassce" | "neco" | "utme" | "post-utme" | "university";
+export type ExamType = "wassce" | "neco" | "utme" | "post-utme";
 export type Theme = "light" | "dark" | "system";
 export type Difficulty = "easy" | "medium" | "hard" | "mixed";
 export type QuizStatus = "in_progress" | "completed" | "abandoned";
@@ -24,10 +24,9 @@ export interface Profile {
 }
 export interface StepTwoProps {
   examType: ExamType | null;
-  schoolId: string;
-  setSchoolId: (id: string) => void;
+
   selectedCourses: string[];
-  filteredCourses: Course[];
+
   toggleCourse: (id: string) => void;
   loading: boolean;
   onBack: () => void;

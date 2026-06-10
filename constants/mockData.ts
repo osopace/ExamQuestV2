@@ -1,4 +1,22 @@
 import type { TopicAnalytics } from "@/types";
+import {
+  Atom,
+  Award,
+  BarChart2,
+  BookOpen,
+  BookOpenCheck,
+  Cross,
+  DollarSign,
+  Globe,
+  Hash,
+  Landmark,
+  Leaf,
+  Moon,
+  ShieldAlert,
+  ShieldCheck,
+  TrendingUp,
+  Zap,
+} from "lucide-react";
 
 export const SUBJECTS: string[] = [
   "english",
@@ -151,5 +169,144 @@ export const FAQ = [
   {
     q: "Which universities are supported for Post-UTME?",
     a: "We currently support 50+ universities including UNILAG, UI, OAU, UNN, ABU, UNIBEN, FUTA, Covenant University, and more. We add new schools every month.",
+  },
+];
+export interface SubjectMockData {
+  id: string; // Matches your exact snake_case string list
+  title: string; // Beautiful formatted name for the UI display
+  icon: any; // Lucide React icon component reference
+  color: string; // Tailwind brand background/text color tokens
+  totalQuestions: number; // For dashboard display counts
+  progress: number; // Initial layout prep percentage (0-100)
+}
+
+export const ALL_SUBJECTS: SubjectMockData[] = [
+  {
+    id: "english",
+    title: "English Language",
+    icon: BookOpen,
+    color: "bg-blue-50 text-blue-600 border-blue-100",
+    totalQuestions: 1200,
+    progress: 0,
+  },
+  {
+    id: "mathematics",
+    title: "Mathematics",
+    icon: Hash,
+    color: "bg-indigo-50 text-indigo-600 border-indigo-100",
+    totalQuestions: 1500,
+    progress: 0,
+  },
+  {
+    id: "biology",
+    title: "Biology",
+    icon: Leaf,
+    color: "bg-emerald-50 text-emerald-600 border-emerald-100",
+    totalQuestions: 950,
+    progress: 0,
+  },
+  {
+    id: "physics",
+    title: "Physics",
+    icon: Zap,
+    color: "bg-amber-50 text-amber-600 border-amber-100",
+    totalQuestions: 880,
+    progress: 0,
+  },
+  {
+    id: "chemistry",
+    title: "Chemistry",
+    icon: Atom,
+    color: "bg-purple-50 text-purple-600 border-purple-100",
+    totalQuestions: 920,
+    progress: 0,
+  },
+  {
+    id: "economics",
+    title: "Economics",
+    icon: TrendingUp,
+    color: "bg-cyan-50 text-cyan-600 border-cyan-100",
+    totalQuestions: 750,
+    progress: 0,
+  },
+  {
+    id: "government",
+    title: "Government",
+    icon: ShieldAlert,
+    color: "bg-rose-50 text-rose-600 border-rose-100",
+    totalQuestions: 600,
+    progress: 0,
+  },
+  {
+    id: "geography",
+    title: "Geography",
+    icon: Globe,
+    color: "bg-teal-50 text-teal-600 border-teal-100",
+    totalQuestions: 540,
+    progress: 0,
+  },
+  {
+    id: "commerce",
+    title: "Commerce",
+    icon: BarChart2,
+    color: "bg-orange-50 text-orange-600 border-orange-100",
+    totalQuestions: 620,
+    progress: 0,
+  },
+  {
+    id: "accounting",
+    title: "Financial Accounting",
+    icon: DollarSign,
+    color: "bg-green-50 text-green-600 border-green-100",
+    totalQuestions: 480,
+    progress: 0,
+  },
+  {
+    id: "crk",
+    title: "Christian Religious Knowledge",
+    icon: Cross,
+    color: "bg-sky-50 text-sky-600 border-sky-100",
+    totalQuestions: 400,
+    progress: 0,
+  },
+  {
+    id: "irk",
+    title: "Islamic Religious Knowledge",
+    icon: Moon,
+    color: "bg-violet-50 text-violet-600 border-violet-100",
+    totalQuestions: 400,
+    progress: 0,
+  },
+  {
+    id: "civiledu",
+    title: "Civic Education",
+    icon: ShieldCheck,
+    color: "bg-fuchsia-50 text-fuchsia-600 border-fuchsia-100",
+    totalQuestions: 500,
+    progress: 0,
+  },
+  {
+    id: "englishlit",
+    title: "Literature in English",
+    icon: BookOpenCheck,
+    color: "bg-pink-50 text-pink-600 border-pink-100",
+    totalQuestions: 650,
+    progress: 0,
+  },
+  {
+    id: "insurance",
+    title: "Insurance",
+    icon: Award,
+    color: "bg-lime-50 text-lime-600 border-lime-100",
+    totalQuestions: 320,
+    progress: 0,
+  },
+  {
+    id: "history",
+    title: "History",
+    icon: Landmark,
+    color: "bg-yellow-50 text-yellow-700 border-yellow-100",
+    totalQuestions: 450,
+    progress: 0,
   },
 ];

@@ -32,7 +32,6 @@ const EXAM_OPTIONS: { id: ExamType; label: string; sub: string }[] = [
   { id: "neco", label: "NECO", sub: "National Exams" },
   { id: "utme", label: "JAMB", sub: "UTME" },
   { id: "post-utme", label: "Post-UTME", sub: "Aptitude Test" },
-  { id: "university", label: "University", sub: "Degree Courses" },
 ];
 
 export default function ProfilePage() {
@@ -114,18 +113,16 @@ export default function ProfilePage() {
     setNameError("");
     setLoading(true);
     try {
-      const schoolObj = SCHOOLS.find((s) => s.id === school);
       await updateProfile(profile.id, {
         full_name: fullName.trim(),
-        school_id: school || undefined,
-        school_name: schoolObj?.name,
+
         exam_type: examTypes[0],
         exam_types: examTypes,
       });
       updateStore({
         full_name: fullName.trim(),
         school_id: school || undefined,
-        school_name: schoolObj?.name,
+
         exam_type: examTypes[0],
         exam_types: examTypes,
       });
@@ -396,27 +393,6 @@ export default function ProfilePage() {
                   : "Maximum reached. Deselect one to switch."}
               </p>
             </div>
-
-            {/* School selector — only when university is one of the chosen types */}
-            {examTypes.includes("university") && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  School
-                </label>
-                <select
-                  value={school}
-                  onChange={(e) => setSchool(e.target.value)}
-                  className="w-full h-11 rounded-xl border border-gray-200 bg-white px-4 text-sm focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
-                >
-                  <option value="">Select a school...</option>
-                  {SCHOOLS.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
 
             <Button
               onClick={handleSave}

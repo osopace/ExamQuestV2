@@ -1,11 +1,18 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, CheckCircle, ArrowRight } from "lucide-react";
+import {
+  BookOpen,
+  CheckCircle,
+  ArrowRight,
+  GraduationCap,
+  Award,
+  Building2,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import Button from "@/components/ui/Button";
 import { Stepper } from "@/components/ui/index";
-import { SCHOOLS } from "@/constants/mockData";
+
 import StepTwo from "./StepTwo";
 import { updateProfile } from "@/supabase/db";
 import { useAuthStore } from "@/store/authStore";
@@ -16,37 +23,36 @@ const EXAM_TYPES: {
   id: ExamType;
   label: string;
   desc: string;
-  emoji: string;
+  icon: any;
+  color?: string;
 }[] = [
   {
     id: "wassce",
     label: "WAEC",
     desc: "West African Examinations Council",
-    emoji: "📝",
+    icon: Award,
+    color: "bg-blue-50 text-blue-600 border-blue-100",
   },
   {
     id: "neco",
     label: "NECO",
     desc: "National Examinations Council",
-    emoji: "📝",
+    icon: BookOpen,
+    color: "bg-emerald-50 text-emerald-600 border-emerald-100",
   },
   {
     id: "utme",
     label: "JAMB UTME",
     desc: "Joint Admissions and Matriculation Board",
-    emoji: "🎯",
+    icon: GraduationCap,
+    color: "bg-purple-50 text-purple-600 border-purple-100",
   },
   {
     id: "post-utme",
     label: "Post-UTME",
     desc: "University screening examinations",
-    emoji: "🏫",
-  },
-  {
-    id: "university",
-    label: "University",
-    desc: "Semester & end-of-year exams",
-    emoji: "🎓",
+    icon: Building2,
+    color: "bg-amber-50 text-amber-600 border-amber-100",
   },
 ];
 
@@ -77,18 +83,17 @@ export default function OnboardingPage() {
     }
     setLoading(true);
     try {
-      const school = SCHOOLS.find((s) => s.id === schoolId);
       await updateProfile(profile.id, {
         exam_type: examType ?? undefined,
         school_id: schoolId || undefined,
-        school_name: school?.name,
+
         enrolled_course_ids: selectedCourses,
         onboarding_complete: true,
       });
       updateStore({
         exam_type: examType ?? undefined,
         school_id: schoolId,
-        school_name: school?.name,
+
         enrolled_course_ids: selectedCourses,
         onboarding_complete: true,
       });
@@ -124,13 +129,15 @@ export default function OnboardingPage() {
               Choose your primary exam type. You can change this later.
             </p>
             <div className="grid sm:grid-cols-2 gap-4">
-              {EXAM_TYPES.map(({ id, label, desc, emoji }) => (
+              {EXAM_TYPES.map(({ id, label, desc, icon: Icon }) => (
                 <button
                   key={id}
                   onClick={() => setExamType(id)}
                   className={`p-5 rounded-2xl border-2 text-left transition-all ${examType === id ? "border-primary-500 bg-primary-50" : "border-gray-200 bg-white hover:border-primary-200"}`}
                 >
-                  <div className="text-3xl mb-3">{emoji}</div>
+                  <div className="text-3xl mb-3">
+                    <Icon size={24} />
+                  </div>
                   <div className="font-bold text-gray-900 mb-1">{label}</div>
                   <div className="text-sm text-gray-500">{desc}</div>
                   {examType === id && (
@@ -151,14 +158,11 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* Step 2: School + Courses */}
+        {/* Step 2: School + subjects */}
         {step === 1 && (
           <StepTwo
             examType={examType}
-            schoolId={schoolId}
-            setSchoolId={setSchoolId}
             selectedCourses={selectedCourses}
-            filteredCourses={[]}
             toggleCourse={toggleCourse}
             loading={loading}
             onBack={() => setStep(0)}

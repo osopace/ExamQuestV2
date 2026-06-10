@@ -5,6 +5,7 @@ import type {
   Bookmark,
   UserSettings,
   AppNotification,
+  ExamType,
 } from "@/types";
 
 /* ── Profiles ── */
@@ -35,40 +36,67 @@ export async function uploadAvatar(
   return `${data.publicUrl}?t=${Date.now()}`;
 }
 
-/* ── Courses ── */
-export async function getCourses() {
-  const { data, error } = await supabase
-    .from("courses")
-    .select("*")
-    .order("name");
-  if (error) throw error;
-  return data;
-}
+/* ── Subjects ── */
 
 // Fetches subjects for WAEC, UTME or Post-UTME from their Supabase tables
 // e.g. "wassce" → "wassce_subjects", "utme" → "utme_subjects"
-export async function getExamSubjects(
-  examType: "wassce" | "neco" | "utme" | "post-utme",
-) {
-  const { data, error } = await supabase
-    .from("questions")
-    .select("subject")
-    .eq("exam_type", examType)
-    .order("subject")
-    .limit(5000);
+// export async function getExamSubjects(examType: ExamType) {
+//   const { data, error } = await supabase
+//     .from("questions")
+//     .select("subject")
+//     .eq("exam_type", examType)
+//     .order("subject")
+//     .limit(5000);
 
-  if (error) return [];
+//   if (error) return [];
 
-  const uniqueSubjects = [...new Set(data.map((q) => q.subject))];
+//   const uniqueSubjects = [...new Set(data.map((q) => q.subject))];
 
-  return uniqueSubjects.map((subject) => ({
-    subject_id: subject,
-    name: subject.charAt(0).toUpperCase() + subject.slice(1),
-    description: "",
-    exam_type: examType,
-  }));
+//   return uniqueSubjects.map((subject) => ({
+//     subject_id: subject,
+//     name: subject.charAt(0).toUpperCase() + subject.slice(1),
+//     exam_type: examType,
+//   }));
+// }
+export async function getExamSubjects(examType: ExamType) {
+  try {
+    const { data, error } = await supabase
+      .from("questions")
+      .select("subject")
+      .eq("exam_type", examType)
+      .order("subject");
+
+    // 1. If Supabase explicitly errors out, handle it gracefully
+    if (error) {
+      console.error("Supabase error fetching subjects:", error.message);
+      return [];
+    }
+
+    // 2. Defensive check if data is completely null or missing
+    if (!data || data.length === 0) {
+      console.warn(
+        `No questions found in database matching exam_type: "${examType}"`,
+      );
+      return [];
+    }
+
+    // 3. Extract unique clean strings
+    const uniqueSubjects = [
+      ...new Set(data.map((q) => q.subject).filter(Boolean)),
+    ];
+
+    // 4. Map to your expected frontend UI objects
+    return uniqueSubjects.map((subject) => ({
+      subject_id: subject,
+      name: subject.charAt(0).toUpperCase() + subject.slice(1),
+      exam_type: examType,
+    }));
+  } catch (criticalError) {
+    // 5. CRITICAL: If the code crashes (e.g. data mapping fails), catch it and return empty
+    console.error("CRITICAL error in getExamSubjects function:", criticalError);
+    return [];
+  }
 }
-
 // Works for any school — table name is built from schoolId e.g. "unilag" → "unilag_courses"
 export async function getSchoolCourses(schoolId: string) {
   const table = `${schoolId.toLowerCase()}_courses`;
