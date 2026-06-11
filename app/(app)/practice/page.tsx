@@ -1,7 +1,15 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Play, BookOpen, Clock, Target, Loader2 } from "lucide-react";
+import {
+  Play,
+  BookOpen,
+  Clock,
+  Target,
+  Loader2,
+  Timer,
+  BookOpenCheck,
+} from "lucide-react";
 import Button from "@/components/ui/Button";
 import { Card } from "@/components/ui/index";
 import Topbar from "@/components/shared/Topbar";
@@ -20,7 +28,6 @@ const EXAM_LABELS: Record<string, string> = {
   neco: "NECO",
   utme: "JAMB UTME",
   "post-utme": "Post-UTME",
-  university: "University",
 };
 
 const DIFFICULTIES: { id: Difficulty; label: string; desc: string }[] = [
@@ -40,10 +47,9 @@ export default function PracticePage() {
 
   const enrolledIds = profile?.enrolled_course_ids ?? [];
 
-  const examTypes: ExamType[] =
-    profile?.exam_types?.length
-      ? (profile.exam_types as ExamType[])
-      : profile?.exam_type
+  const examTypes: ExamType[] = profile?.exam_types?.length
+    ? (profile.exam_types as ExamType[])
+    : profile?.exam_type
       ? [profile.exam_type]
       : [];
   const termSingular = getTerm(profile?.exam_type, false);
@@ -53,10 +59,13 @@ export default function PracticePage() {
   const [courseId, setCourseId] = useState(initialCourse);
 
   // Merge URL course into options so it's always selectable even if not enrolled
-  const courseOptions = urlCourse && !enrolledIds.includes(urlCourse)
-    ? [urlCourse, ...enrolledIds]
-    : enrolledIds;
-  const [selectedExamType, setSelectedExamType] = useState<ExamType>(examTypes[0] ?? "wassce");
+  const courseOptions =
+    urlCourse && !enrolledIds.includes(urlCourse)
+      ? [urlCourse, ...enrolledIds]
+      : enrolledIds;
+  const [selectedExamType, setSelectedExamType] = useState<ExamType>(
+    examTypes[0] ?? "wassce",
+  );
 
   const [mode, setMode] = useState<QuizMode>("quiz");
   const [difficulty, setDifficulty] = useState<Difficulty>("mixed");
@@ -65,7 +74,6 @@ export default function PracticePage() {
   const [starting, setStarting] = useState(false);
 
   useEffect(() => {
-
     if (urlCourse) setCourseId(urlCourse);
   }, [urlCourse]);
 
@@ -77,17 +85,17 @@ export default function PracticePage() {
     id.replace(/\b\w/g, (c) => c.toUpperCase());
 
   const handleStart = async () => {
-    if (!courseId) { toast.error(`Please select a ${termSingular.toLowerCase()}`); return; }
+    if (!courseId) {
+      toast.error(`Please select a ${termSingular.toLowerCase()}`);
+      return;
+    }
     if (!profile) return;
-
 
     setStarting(true);
     try {
       const questions = await getSubjectQuestions(
         courseId,
-
         selectedExamType,
-
         count,
         difficulty,
       );
@@ -105,7 +113,8 @@ export default function PracticePage() {
         status: "in_progress" as const,
         mode,
         total_questions: questions.length,
-        time_limit_seconds: timed && mode === "quiz" ? questions.length * 60 : undefined,
+        time_limit_seconds:
+          timed && mode === "quiz" ? questions.length * 60 : undefined,
         difficulty,
         correct_count: 0,
         incorrect_count: 0,
@@ -129,7 +138,8 @@ export default function PracticePage() {
         <div className="p-6 max-w-3xl mx-auto">
           <Card padding="lg" className="text-center py-12">
             <p className="text-gray-500 mb-4">
-              You have no enrolled {getTerm(profile?.exam_type).toLowerCase()} yet.
+              You have no enrolled {getTerm(profile?.exam_type).toLowerCase()}{" "}
+              yet.
             </p>
             <Button onClick={() => router.push("/courses")}>
               Browse {getTerm(profile?.exam_type)}
@@ -144,28 +154,40 @@ export default function PracticePage() {
     <div>
       <Topbar title="Practice" />
       <div className="p-6 max-w-3xl mx-auto space-y-6">
-
         {/* Mode */}
         <Card padding="md">
           <h2 className="font-bold text-gray-900 mb-4">Practice Mode</h2>
           <div className="grid grid-cols-2 gap-3">
-            {([
-              ["quiz", "Quiz Mode", "Timed, scored — simulates real exam conditions.", "⏱️"],
-              ["study", "Study Mode", "No timer, see correct answers as you go.", "📖"],
-            ] as const).map(([id, label, desc, emoji]) => (
+            {(
+              [
+                [
+                  "quiz",
+                  "Quiz Mode",
+                  "Timed, scored — simulates real exam conditions.",
+                  <Timer key="quiz-icon" size={24} />,
+                ],
+                [
+                  "study",
+                  "Study Mode",
+                  "No timer, see correct answers as you go.",
+                  <BookOpenCheck key="study-icon" size={24} />,
+                ],
+              ] as const
+            ).map(([id, label, desc, icon]) => (
               <button
                 key={id}
                 onClick={() => setMode(id as QuizMode)}
-                className={`p-4 rounded-xl border-2 text-left transition-all ${mode === id ? "border-primary-500 bg-primary-50" : "border-gray-200 hover:border-primary-200"}`}
+                className={`p-4 rounded-xl border-2 text-left transition-all ${mode === id ? "border-primary-500 bg-primary-50 text-primary-600" : "border-gray-200 text-gray-400 hover:border-primary-200"}`}
               >
-                <div className="text-2xl mb-2">{emoji}</div>
-                <div className="font-bold text-gray-900 text-sm mb-1">{label}</div>
+                <div className="mb-2">{icon}</div>
+                <div className="font-bold text-gray-900 text-sm mb-1">
+                  {label}
+                </div>
                 <div className="text-xs text-gray-500">{desc}</div>
               </button>
             ))}
           </div>
         </Card>
-
 
         {/* Exam type toggle — shown only when user has 2 exam types */}
         {examTypes.length > 1 && (
@@ -183,7 +205,7 @@ export default function PracticePage() {
                     "flex-1 py-2.5 px-3 rounded-xl border-2 text-sm font-semibold transition-all",
                     selectedExamType === et
                       ? "border-primary-500 bg-primary-50 text-primary-700"
-                      : "border-gray-200 text-gray-600 hover:border-primary-200"
+                      : "border-gray-200 text-gray-600 hover:border-primary-200",
                   )}
                 >
                   {EXAM_LABELS[et] ?? et.toUpperCase()}
@@ -191,15 +213,17 @@ export default function PracticePage() {
               ))}
             </div>
             <p className="text-xs text-gray-400 mt-2">
-              Questions will be fetched from the <span className="font-medium text-gray-600">{EXAM_LABELS[selectedExamType]}</span> question bank.
+              Questions will be fetched from the{" "}
+              <span className="font-medium text-gray-600">
+                {EXAM_LABELS[selectedExamType]}
+              </span>{" "}
+              question bank.
             </p>
           </Card>
         )}
 
-
         <Card padding="md">
           <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <BookOpen size={18} className="text-primary-600" />
             Select {termSingular}
           </h2>
           <select
@@ -207,9 +231,7 @@ export default function PracticePage() {
             onChange={(e) => setCourseId(e.target.value)}
             className="w-full h-11 rounded-xl border border-gray-200 px-4 text-sm focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 bg-white"
           >
-
             {courseOptions.map((id) => (
-
               <option key={id} value={id}>
                 {subjectName(id)}
               </option>
@@ -241,7 +263,6 @@ export default function PracticePage() {
         <Card padding="md">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-bold text-gray-900 flex items-center gap-2">
-              <BookOpen size={18} className="text-primary-600" />
               Questions
             </h2>
             <span className="text-2xl font-bold text-primary-600">{count}</span>
@@ -267,23 +288,32 @@ export default function PracticePage() {
                 <Clock size={18} className="text-primary-600" />
                 <div>
                   <p className="font-bold text-gray-900">Timed Quiz</p>
-                  <p className="text-sm text-gray-500">1 minute per question ({count} min total)</p>
+                  <p className="text-sm text-gray-500">
+                    1 minute per question ({count} min total)
+                  </p>
                 </div>
               </div>
               <button
                 onClick={() => setTimed(!timed)}
                 className={`relative w-12 h-6 rounded-full transition-colors ${timed ? "bg-primary-600" : "bg-gray-200"}`}
               >
-                <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${timed ? "translate-x-6" : "translate-x-0.5"}`} />
+                <div
+                  className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${timed ? "translate-x-6" : "translate-x-0.5"}`}
+                />
               </button>
             </div>
           </Card>
         )}
 
-        <Button fullWidth size="lg" onClick={handleStart} loading={starting} leftIcon={<Play size={18} />}>
+        <Button
+          fullWidth
+          size="lg"
+          onClick={handleStart}
+          loading={starting}
+          leftIcon={<Play size={18} />}
+        >
           Start {mode === "quiz" ? "Quiz" : "Study Session"}
         </Button>
-
       </div>
     </div>
   );

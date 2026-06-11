@@ -53,32 +53,94 @@ export default function LandingPage() {
       <section className="py-10 bg-white border-y border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-sm text-gray-400 mb-6">
-            Trusted by students from top universities worldwide
+            Trusted by students preparing for Nigeria's biggest exams
           </p>
-          <div className="flex flex-wrap justify-center items-center gap-8 lg:gap-14">
+
+          {/* Exam Bodies */}
+          <div className="flex flex-wrap justify-center items-center gap-8 lg:gap-14 mb-6">
             <div className="flex flex-col items-center leading-tight">
-              <span className="text-lg font-black text-red-700 tracking-tight">MIT</span>
+              <span className="text-lg font-black text-green-700 tracking-tight">
+                JAMB
+              </span>
               <span className="text-[8px] text-gray-400 tracking-widest uppercase">
-                Massachusetts Institute
-                <br />
-                of Technology
+                Joint Admissions &<br />
+                Matriculation Board
               </span>
             </div>
+
             <div className="flex flex-col items-center leading-tight">
-              <span className="text-lg font-black text-red-600 tracking-tight">Stanford</span>
-              <span className="text-[8px] text-gray-400 tracking-widest uppercase">University</span>
+              <span className="text-lg font-black text-blue-800 tracking-tight">
+                WAEC
+              </span>
+              <span className="text-[8px] text-gray-400 tracking-widest uppercase">
+                West African
+                <br />
+                Examinations Council
+              </span>
             </div>
-            <div>
-              <span className="text-lg font-black text-blue-900 tracking-widest uppercase">Oxford</span>
-            </div>
+
             <div className="flex flex-col items-center leading-tight">
-              <span className="text-lg font-black text-red-800 tracking-tight">HARVARD</span>
-              <span className="text-[8px] text-gray-400 tracking-widest uppercase">University</span>
+              <span className="text-lg font-black text-red-700 tracking-tight">
+                NECO
+              </span>
+              <span className="text-[8px] text-gray-400 tracking-widest uppercase">
+                National Examinations
+                <br />
+                Council
+              </span>
             </div>
-            <div>
-              <span className="text-lg font-black text-blue-700 tracking-tight">Berkeley</span>
+
+            <div className="flex flex-col items-center leading-tight">
+              <span className="text-lg font-black text-purple-700 tracking-tight">
+                Post-UTME
+              </span>
+              <span className="text-[8px] text-gray-400 tracking-widest uppercase">
+                University
+                <br />
+                Screening Exams
+              </span>
             </div>
-            <span className="text-sm text-gray-400 font-medium">And 500+ more universities</span>
+
+            <div className="flex flex-col items-center leading-tight">
+              <span className="text-lg font-black text-orange-600 tracking-tight">
+                NABTEB
+              </span>
+              <span className="text-[8px] text-gray-400 tracking-widest uppercase">
+                National Business &<br />
+                Technical Exams
+              </span>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="w-full border-t border-gray-100 my-4" />
+
+          {/* Nigerian Universities */}
+          <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2">
+            {[
+              { short: "UNILAG", full: "University of Lagos" },
+              { short: "UI", full: "University of Ibadan" },
+              { short: "OAU", full: "Obafemi Awolowo Univ." },
+              { short: "FUTA", full: "Fed. Univ. of Tech. Akure" },
+              { short: "ABU", full: "Ahmadu Bello University" },
+              { short: "UNIABUJA", full: "University of Abuja" },
+              { short: "UNIBEN", full: "University of Benin" },
+            ].map(({ short, full }) => (
+              <div
+                key={short}
+                className="flex flex-col items-center leading-tight"
+              >
+                <span className="text-sm font-black text-gray-600 tracking-tight">
+                  {short}
+                </span>
+                <span className="text-[8px] text-gray-400 tracking-widest uppercase text-center">
+                  {full}
+                </span>
+              </div>
+            ))}
+            <span className="text-sm text-gray-400 font-medium">
+              & 100+ more
+            </span>
           </div>
         </div>
       </section>
@@ -88,10 +150,12 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
-              Everything You Need to <span className="text-primary-600">Excel</span>
+              Everything You Need to{" "}
+              <span className="text-primary-600">Excel</span>
             </h2>
             <p className="text-gray-500 max-w-lg mx-auto">
-              Powerful tools and features designed to supercharge your exam preparation
+              Powerful tools and features designed to supercharge your exam
+              preparation
             </p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -100,7 +164,9 @@ export default function LandingPage() {
                 key={title}
                 className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md hover:border-primary-100 transition-all"
               >
-                <div className={`w-12 h-12 ${iconBg} rounded-xl flex items-center justify-center mb-4`}>
+                <div
+                  className={`w-12 h-12 ${iconBg} rounded-xl flex items-center justify-center mb-4`}
+                >
                   <Icon size={22} className={iconColor} />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">{title}</h3>
@@ -129,11 +195,16 @@ export default function LandingPage() {
                 Ready to Achieve Your Best?
               </h2>
               <p className="text-primary-200">
-                Join thousands of students who are already succeeding with ExamQuest.
+                Join thousands of students who are already succeeding with
+                ExamQuest.
               </p>
             </div>
             <Link href="/signup" className="flex-shrink-0">
-              <Button variant="secondary" size="lg" rightIcon={<ArrowRight size={18} />}>
+              <Button
+                variant="secondary"
+                size="lg"
+                rightIcon={<ArrowRight size={18} />}
+              >
                 Get Started for Free
               </Button>
             </Link>

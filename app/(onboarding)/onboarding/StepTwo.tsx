@@ -5,6 +5,7 @@ import { CheckCircle, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
 import Button from "@/components/ui/Button";
 
 import { getExamSubjects } from "@/supabase/db";
+import{SUBJECTS} from "@/constants/mockData"
 import { getTerm } from "@/utils/terminology";
 import type { StepTwoProps, ExamType } from "@/types";
 
@@ -79,13 +80,13 @@ export default function StepTwo({
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 gap-3 max-h-80 overflow-y-auto pr-1">
-            {subjects.map((s) => {
-              const isSelected = selectedCourses.includes(s.subject_id);
+            {SUBJECTS.map((s) => {
+              const isSelected = selectedCourses.includes(s);
               return (
                 <button
-                  key={s.subject_id}
+                  key={s}
                   type="button" // Always specify button types to prevent accidental form triggers
-                  onClick={() => toggleCourse(s.subject_id)}
+                  onClick={() => toggleCourse(s)}
                   className={`flex items-center gap-3 p-4 rounded-xl border-2 text-left transition-all ${
                     isSelected
                       ? "border-primary-500 bg-primary-50"
@@ -105,7 +106,7 @@ export default function StepTwo({
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-gray-900 truncate">
-                      {s.name}
+                      {s}
                     </p>
                   </div>
                 </button>

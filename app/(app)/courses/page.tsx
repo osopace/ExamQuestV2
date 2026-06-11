@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Play, ArrowRight, Loader2, Plus } from "lucide-react";
+import { Play, ArrowRight, Loader2, Plus, GraduationCap } from "lucide-react";
 import { Card, Badge } from "@/components/ui/index";
 import { ProgressBar } from "@/components/ui/index";
 import Topbar from "@/components/shared/Topbar";
@@ -34,7 +34,6 @@ const EXAM_LABELS: Record<string, string> = {
   neco: "NECO",
   utme: "JAMB UTME",
   "post-utme": "Post-UTME",
-  university: "University",
 };
 
 type DisplayCourse = {
@@ -50,15 +49,7 @@ async function fetchSubjectsForExamType(
   enrolledIds: string[] = [],
 ): Promise<DisplayCourse[]> {
   let all: DisplayCourse[] = [];
-  if (examType === "university" && schoolId) {
-    const rows = await getSchoolCourses(schoolId);
-    all = rows.map((c, i) => ({
-      id: c.course_id,
-      name: c.name,
-      code: c.department ?? "UNIVERSITY",
-      color: COLORS[i % COLORS.length],
-    }));
-  } else if (examType !== "university") {
+  if (examType !== "university") {
     const rows = await getExamSubjects(
       examType as "wassce" | "neco" | "utme" | "post-utme",
     );
@@ -102,7 +93,6 @@ export default function CoursesPage() {
     id,
     name: id.charAt(0).toUpperCase() + id.slice(1),
     code: enrolledLabel,
-
     color: COLORS[i % COLORS.length],
   }));
 
@@ -202,10 +192,13 @@ export default function CoursesPage() {
                   <div className="p-5">
                     <div className="flex items-start justify-between mb-3">
                       <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                         style={{ backgroundColor: course.color + "20" }}
                       >
-                        📚
+                        <GraduationCap
+                          size={20}
+                          style={{ color: course.color }}
+                        />
                       </div>
                       <Badge variant="primary">Active</Badge>
                     </div>
@@ -323,7 +316,7 @@ function BrowseSection({
                 className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ backgroundColor: c.color + "20" }}
               >
-                📚
+                <GraduationCap size={20} style={{ color: c.color }} />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">
