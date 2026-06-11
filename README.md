@@ -1,26 +1,26 @@
-# 📚 ExamQuest — Complete App Documentation
+# ExamQuest — Product Documentation
 
 > Nigeria's #1 exam preparation platform. Built with Next.js 14, Supabase, TypeScript, and Tailwind CSS.
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
-1. [What is ExamQuest?](#1-what-is-examquest)
-2. [Tech Stack — What Each Tool Does](#2-tech-stack)
-3. [Getting Started — Running the App](#3-getting-started)
-4. [Project Folder Structure](#4-project-folder-structure)
-5. [Every File Explained](#5-every-file-explained)
-6. [Every Page Explained](#6-every-page-explained)
-7. [How Data Flows Through the App](#7-how-data-flows)
-8. [The Design System](#8-the-design-system)
-9. [Key Concepts for Beginners](#9-key-concepts-for-beginners)
-10. [How to Extend the App](#10-how-to-extend-the-app)
-11. [Troubleshooting](#11-troubleshooting)
+1. [Overview](#1-what-is-examquest)
+2. [Technology Stack](#2-tech-stack)
+3. [Installation & Setup](#3-getting-started)
+4. [Project Architecture](#4-project-folder-structure)
+5. [File Reference](#5-every-file-explained)
+6. [Module Reference](#6-every-page-explained)
+7. [System Data Flow](#7-how-data-flows)
+8. [Design Specification](#8-the-design-system)
+9. [Core Concepts](#9-key-concepts-for-beginners)
+10. [Extensibility Guide](#10-how-to-extend-the-app)
+11. [Support & Troubleshooting](#11-troubleshooting)
 
 ---
 
-## 1. What is ExamQuest?
+## 1. Overview
 
 ExamQuest is a **full-stack web application** that helps Nigerian students prepare for:
 
@@ -31,15 +31,15 @@ ExamQuest is a **full-stack web application** that helps Nigerian students prepa
 
 ### What students can do on ExamQuest:
 
-| Feature             | Description                                                  |
-| ------------------- | ------------------------------------------------------------ |
-| 📝 Practice Quizzes | Answer timed multiple-choice questions just like a real exam |
-| 📖 Study Mode       | Answer questions with instant feedback and explanations      |
-| 📊 Analytics        | See charts of your scores over time and weak topics          |
-| 🔖 Bookmarks        | Save questions to review later                               |
-| 🏆 Leaderboard      | Compete with other students across Nigeria                   |
-| 🔥 Streaks          | Track how many days in a row you've studied                  |
-| 👤 Profile          | Manage your account and enrolled courses                     |
+| Feature            | Description                                                           |
+| ------------------ | --------------------------------------------------------------------- |
+| Practice Quizzes   | Answer timed multiple-choice questions in simulated exam mode         |
+| Study Mode         | Interactive learning with instant feedback and AI-guided explanations |
+| Advanced Analytics | Data-rich visualizations for score tracking and topic mastery         |
+| Question Bookmarks | Save complex questions for future review                              |
+| Global Leaderboard | Performance-based rankings across the student community               |
+| Study Streaks      | Gamified consistency tracking to improve retention                    |
+| Profile Management | Personalized exam preferences and academic settings                   |
 
 ---
 
@@ -868,7 +868,7 @@ User clicks Done
 | `success`     | `#22C55E` | Correct answers, completed states        |
 | `warning`     | `#F59E0B` | Flagged questions, medium scores         |
 | `error`       | `#EF4444` | Wrong answers, destructive actions       |
-| `info`        | `#3B82F6` | Explanation boxes                        |
+| `info`        | `#3B82F6` | Informational callouts and explanations  |
 
 ### Spacing and Sizing
 

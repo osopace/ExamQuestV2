@@ -2,24 +2,180 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --font-inter: "Inter", system-ui, sans-serif;
+@layer base {
+  :root {
+    --font-inter: "Inter", system-ui, sans-serif;
+  }
+
+  * {
+    box-sizing: border-box;
+    @apply border-neutral-200;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    /* Most backgrounds should remain white or neutral-50 */
+    background-color: #fafafa; /* neutral-50 */
+    color: #4b5563; /* neutral-600 - Body Text */
+    font-family: var(--font-inter);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: #111827; /* neutral-900 - Headings */
+    @apply font-semibold tracking-tight;
+  }
+
+  ::selection {
+    @apply bg-primary-100 text-primary-900;
+  }
 }
 
-* {
-  box-sizing: border-box;
+@layer components {
+  /* Button System */
+  .btn-primary {
+    @apply bg-primary-600 text-white px-6 py-2.5 rounded-xl font-medium transition-all 
+           hover:bg-primary-700 shadow-sm active:scale-[0.98] disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply bg-primary-50 text-primary-700 px-6 py-2.5 rounded-xl font-medium transition-all 
+           hover:bg-primary-100 active:scale-[0.98];
+  }
+
+  .btn-ghost {
+    @apply text-neutral-600 px-4 py-2 rounded-xl transition-colors hover:bg-neutral-100 hover:text-neutral-900;
+  }
+
+  /* Card System */
+  .card-premium {
+    @apply bg-white border border-neutral-200 rounded-2xl p-6 shadow-sm 
+           transition-all hover:shadow-md;
+  }
+
+  /* Input System */
+  .input-premium {
+    @apply w-full px-4 py-3 bg-white border border-neutral-200 rounded-xl outline-none
+           focus:ring-4 focus:ring-primary-500/10 focus:border-primary-500 transition-all
+           text-neutral-900 placeholder:text-neutral-400;
+  }
+
+  /* Navigation (Navbar & Sidebar) */
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-2.5 rounded-xl text-neutral-500 font-medium transition-all
+           hover:bg-neutral-100 hover:text-neutral-900;
+  }
+
+  .nav-item-active {
+    @apply bg-primary-50 text-primary-700 hover:bg-primary-100;
+  }
+
+  /* Progress System */
+  .progress-container {
+    @apply h-2 w-full bg-neutral-100 rounded-full overflow-hidden;
+  }
+
+  .progress-bar {
+    @apply h-full bg-primary-600 rounded-full transition-all duration-500 ease-out;
+  }
+
+  /* Table System */
+  .table-premium {
+    @apply w-full text-left border-collapse;
+  }
+
+  .table-premium th {
+    @apply px-6 py-4 text-xs font-semibold uppercase tracking-wider text-neutral-400 border-b border-neutral-100;
+  }
+
+  .table-premium td {
+    @apply px-6 py-4 text-sm text-neutral-600 border-b border-neutral-50;
+  }
+
+  /* Tab System */
+  .tab-list {
+    @apply flex gap-1 p-1 bg-neutral-100 rounded-xl w-fit;
+  }
+
+  .tab-trigger {
+    @apply px-4 py-2 text-sm font-medium rounded-lg transition-all;
+  }
+
+  .tab-trigger-active {
+    @apply bg-white text-neutral-900 shadow-sm;
+  }
+
+  /* Quiz Component Styles */
+  .quiz-option {
+    @apply card-premium cursor-pointer border-2 border-transparent hover:border-primary-200 
+           transition-all active:scale-[0.99];
+  }
+
+  .quiz-option-selected {
+    @apply border-primary-500 bg-primary-50/50 shadow-md;
+  }
+
+  /* Status Badges */
+  .badge {
+    @apply px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+  .badge-success {
+    @apply bg-success-50 text-success-600;
+  }
+  .badge-danger {
+    @apply bg-danger-50 text-danger-600;
+  }
+  .badge-warning {
+    @apply bg-warning-50 text-warning-600;
+  }
+  .badge-primary {
+    @apply bg-primary-50 text-primary-600;
+  }
+
+  /* Empty States */
+  .empty-state {
+    @apply flex flex-col items-center justify-center py-12 px-4 text-center bg-white border border-dashed border-neutral-300 rounded-2xl;
+  }
+
+  .empty-state-icon {
+    @apply p-4 bg-neutral-50 text-neutral-400 rounded-full mb-4;
+  }
+
+  /* High Precision Shadows (Stripe Style) */
+  .shadow-premium {
+    box-shadow:
+      0 1px 3px 0 rgba(0, 0, 0, 0.1),
+      0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  .shadow-premium-hover:hover {
+    box-shadow:
+      0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  }
 }
 
-html {
-  scroll-behavior: smooth;
+/* Refined SaaS Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
 }
-
-body {
-  background-color: #F8F9FF;
+::-webkit-scrollbar-track {
+  background: transparent;
 }
-
-/* Custom scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 99px;
+} /* neutral-200 */
+::-webkit-scrollbar-thumb:hover {
+  background: #d1d5db;
+} /* neutral-300 */

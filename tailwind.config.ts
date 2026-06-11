@@ -41,7 +41,7 @@ const config: Config = {
         "fade-in": "fadeIn 0.3s ease-out",
         "slide-up": "slideUp 0.3s ease-out",
         "scale-in": "scaleIn 0.28s cubic-bezier(0.34,1.56,0.64,1)",
-        "shake": "shake 0.38s ease-in-out",
+        shake: "shake 0.38s ease-in-out",
         "pulse-danger": "pulseDanger 1.8s ease-in-out infinite",
       },
       keyframes: {
@@ -52,7 +52,7 @@ const config: Config = {
         },
         scaleIn: {
           from: { opacity: "0", transform: "scale(0.94) translateY(10px)" },
-          to:   { opacity: "1", transform: "scale(1)    translateY(0)" },
+          to: { opacity: "1", transform: "scale(1)    translateY(0)" },
         },
         shake: {
           "0%,100%": { transform: "translateX(0)" },
@@ -61,7 +61,7 @@ const config: Config = {
         },
         pulseDanger: {
           "0%,100%": { boxShadow: "0 0 0 0 rgba(239,68,68,0.3)" },
-          "50%":     { boxShadow: "0 0 0 10px rgba(239,68,68,0)" },
+          "50%": { boxShadow: "0 0 0 10px rgba(239,68,68,0)" },
         },
       },
     },
