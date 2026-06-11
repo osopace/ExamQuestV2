@@ -1,14 +1,27 @@
 "use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Play, BookOpen, Clock, Target } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Play, BookOpen, Clock, Target, Loader2 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { Card } from "@/components/ui/index";
 import Topbar from "@/components/shared/Topbar";
 import { useQuizStore } from "@/store/quizStore";
-import { COURSES, SAMPLE_QUESTIONS } from "@/constants/mockData";
-import type { Difficulty, QuizMode } from "@/types";
+import { useAuthStore } from "@/store/authStore";
+import { getSubjectQuestions } from "@/supabase/db";
+import { getTerm } from "@/utils/terminology";
+
+import { cn } from "@/utils/cn";
+import type { Difficulty, QuizMode, ExamType } from "@/types";
+
 import toast from "react-hot-toast";
+
+const EXAM_LABELS: Record<string, string> = {
+  wassce: "WAEC",
+  neco: "NECO",
+  utme: "JAMB UTME",
+  "post-utme": "Post-UTME",
+  university: "University",
+};
 
 const DIFFICULTIES: { id: Difficulty; label: string; desc: string }[] = [
   { id: "easy", label: "Easy", desc: "Build confidence" },
@@ -21,39 +34,111 @@ const QUESTION_COUNTS = [10, 20, 30, 40, 50];
 
 export default function PracticePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { startQuiz } = useQuizStore();
-  const [courseId, setCourseId] = useState("csc101");
+  const { profile } = useAuthStore();
+
+  const enrolledIds = profile?.enrolled_course_ids ?? [];
+
+  const examTypes: ExamType[] =
+    profile?.exam_types?.length
+      ? (profile.exam_types as ExamType[])
+      : profile?.exam_type
+      ? [profile.exam_type]
+      : [];
+  const termSingular = getTerm(profile?.exam_type, false);
+
+  const urlCourse = searchParams.get("course") ?? "";
+  const initialCourse = urlCourse || enrolledIds[0] || "";
+  const [courseId, setCourseId] = useState(initialCourse);
+
+  // Merge URL course into options so it's always selectable even if not enrolled
+  const courseOptions = urlCourse && !enrolledIds.includes(urlCourse)
+    ? [urlCourse, ...enrolledIds]
+    : enrolledIds;
+  const [selectedExamType, setSelectedExamType] = useState<ExamType>(examTypes[0] ?? "wassce");
+
   const [mode, setMode] = useState<QuizMode>("quiz");
   const [difficulty, setDifficulty] = useState<Difficulty>("mixed");
   const [count, setCount] = useState(20);
   const [timed, setTimed] = useState(true);
+  const [starting, setStarting] = useState(false);
 
-  const handleStart = () => {
-    const course = COURSES.find((c) => c.id === courseId);
-    if (!course) return;
+  useEffect(() => {
 
-    const questions = SAMPLE_QUESTIONS.slice(0, Math.min(count, SAMPLE_QUESTIONS.length));
-    if (questions.length === 0) { toast.error("No questions available"); return; }
+    if (urlCourse) setCourseId(urlCourse);
+  }, [urlCourse]);
 
-    const quiz = {
-      id: `quiz-${Date.now()}`,
-      user_id: "u1",
-      course_id: courseId,
-      course_name: course.name,
-      status: "in_progress" as const,
-      mode,
-      total_questions: questions.length,
-      time_limit_seconds: timed && mode === "quiz" ? count * 60 : undefined,
-      difficulty,
-      correct_count: 0,
-      incorrect_count: 0,
-      skipped_count: 0,
-      started_at: new Date().toISOString(),
-    };
+  useEffect(() => {
+    if (examTypes[0]) setSelectedExamType(examTypes[0]);
+  }, [profile?.exam_type, profile?.exam_types]);
 
-    startQuiz(quiz, questions);
-    router.push(`/quiz/active`);
+  const subjectName = (id: string) =>
+    id.replace(/\b\w/g, (c) => c.toUpperCase());
+
+  const handleStart = async () => {
+    if (!courseId) { toast.error(`Please select a ${termSingular.toLowerCase()}`); return; }
+    if (!profile) return;
+
+
+    setStarting(true);
+    try {
+      const questions = await getSubjectQuestions(
+        courseId,
+
+        selectedExamType,
+
+        count,
+        difficulty,
+      );
+
+      if (questions.length === 0) {
+        toast.error("No questions available for this subject yet.");
+        return;
+      }
+
+      const quiz = {
+        id: `quiz-${Date.now()}`,
+        user_id: profile.id,
+        course_id: courseId,
+        course_name: subjectName(courseId),
+        status: "in_progress" as const,
+        mode,
+        total_questions: questions.length,
+        time_limit_seconds: timed && mode === "quiz" ? questions.length * 60 : undefined,
+        difficulty,
+        correct_count: 0,
+        incorrect_count: 0,
+        skipped_count: 0,
+        started_at: new Date().toISOString(),
+      };
+
+      startQuiz(quiz, questions);
+      router.push("/quiz/active");
+    } catch {
+      toast.error("Failed to load questions. Please try again.");
+    } finally {
+      setStarting(false);
+    }
   };
+
+  if (enrolledIds.length === 0 && !urlCourse) {
+    return (
+      <div>
+        <Topbar title="Practice" />
+        <div className="p-6 max-w-3xl mx-auto">
+          <Card padding="lg" className="text-center py-12">
+            <p className="text-gray-500 mb-4">
+              You have no enrolled {getTerm(profile?.exam_type).toLowerCase()} yet.
+            </p>
+            <Button onClick={() => router.push("/courses")}>
+              Browse {getTerm(profile?.exam_type)}
+            </Button>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -64,8 +149,10 @@ export default function PracticePage() {
         <Card padding="md">
           <h2 className="font-bold text-gray-900 mb-4">Practice Mode</h2>
           <div className="grid grid-cols-2 gap-3">
-            {([["quiz", "Quiz Mode", "Timed, scored — simulates real exam conditions.", "⏱️"],
-               ["study", "Study Mode", "No timer, see correct answers as you go.", "📖"]] as const).map(([id, label, desc, emoji]) => (
+            {([
+              ["quiz", "Quiz Mode", "Timed, scored — simulates real exam conditions.", "⏱️"],
+              ["study", "Study Mode", "No timer, see correct answers as you go.", "📖"],
+            ] as const).map(([id, label, desc, emoji]) => (
               <button
                 key={id}
                 onClick={() => setMode(id as QuizMode)}
@@ -79,21 +166,63 @@ export default function PracticePage() {
           </div>
         </Card>
 
-        {/* Course */}
+
+        {/* Exam type toggle — shown only when user has 2 exam types */}
+        {examTypes.length > 1 && (
+          <Card padding="md">
+            <h2 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+              <Target size={18} className="text-primary-600" />
+              Exam Type
+            </h2>
+            <div className="flex gap-2">
+              {examTypes.map((et) => (
+                <button
+                  key={et}
+                  onClick={() => setSelectedExamType(et)}
+                  className={cn(
+                    "flex-1 py-2.5 px-3 rounded-xl border-2 text-sm font-semibold transition-all",
+                    selectedExamType === et
+                      ? "border-primary-500 bg-primary-50 text-primary-700"
+                      : "border-gray-200 text-gray-600 hover:border-primary-200"
+                  )}
+                >
+                  {EXAM_LABELS[et] ?? et.toUpperCase()}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 mt-2">
+              Questions will be fetched from the <span className="font-medium text-gray-600">{EXAM_LABELS[selectedExamType]}</span> question bank.
+            </p>
+          </Card>
+        )}
+
+
         <Card padding="md">
-          <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2"><BookOpen size={18} className="text-primary-600" />Select Course</h2>
+          <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <BookOpen size={18} className="text-primary-600" />
+            Select {termSingular}
+          </h2>
           <select
             value={courseId}
             onChange={(e) => setCourseId(e.target.value)}
             className="w-full h-11 rounded-xl border border-gray-200 px-4 text-sm focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 bg-white"
           >
-            {COURSES.map((c) => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)}
+
+            {courseOptions.map((id) => (
+
+              <option key={id} value={id}>
+                {subjectName(id)}
+              </option>
+            ))}
           </select>
         </Card>
 
         {/* Difficulty */}
         <Card padding="md">
-          <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2"><Target size={18} className="text-primary-600" />Difficulty</h2>
+          <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Target size={18} className="text-primary-600" />
+            Difficulty
+          </h2>
           <div className="grid grid-cols-4 gap-2">
             {DIFFICULTIES.map(({ id, label, desc }) => (
               <button
@@ -108,10 +237,13 @@ export default function PracticePage() {
           </div>
         </Card>
 
-        {/* Questions count */}
+        {/* Question count */}
         <Card padding="md">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-gray-900 flex items-center gap-2"><BookOpen size={18} className="text-primary-600" />Questions</h2>
+            <h2 className="font-bold text-gray-900 flex items-center gap-2">
+              <BookOpen size={18} className="text-primary-600" />
+              Questions
+            </h2>
             <span className="text-2xl font-bold text-primary-600">{count}</span>
           </div>
           <div className="flex gap-2">
@@ -148,8 +280,7 @@ export default function PracticePage() {
           </Card>
         )}
 
-        {/* Start button */}
-        <Button fullWidth size="lg" onClick={handleStart} leftIcon={<Play size={18} />}>
+        <Button fullWidth size="lg" onClick={handleStart} loading={starting} leftIcon={<Play size={18} />}>
           Start {mode === "quiz" ? "Quiz" : "Study Session"}
         </Button>
 

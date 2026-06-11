@@ -1,19 +1,23 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Flag, ChevronLeft, ChevronRight, X, Clock, BookmarkPlus } from "lucide-react";
+import { Flag, ChevronLeft, ChevronRight, X, Clock, BookmarkPlus, Bookmark } from "lucide-react";
 import { Modal } from "@/components/ui/index";
 import { cn } from "@/utils/cn";
 import { formatTime } from "@/utils/format";
 import { useQuizStore } from "@/store/quizStore";
+import { useAuthStore } from "@/store/authStore";
+import { addBookmark, removeBookmark } from "@/supabase/db";
 import toast from "react-hot-toast";
 
 export default function QuizActivePage() {
   const router = useRouter();
   const { quiz, questions, answers, currentIndex, setAnswer, toggleFlag, goToIndex, nextQuestion, prevQuestion, reset } = useQuizStore();
+  const { profile } = useAuthStore();
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [quitModal, setQuitModal] = useState(false);
-  const [reportModal, setReportModal] = useState(false);
+  const [bookmarked, setBookmarked] = useState<Set<string>>(new Set());
+  const [bookmarking, setBookmarking] = useState(false);
 
   useEffect(() => {
     if (!quiz) { router.push("/practice"); return; }
@@ -44,6 +48,28 @@ export default function QuizActivePage() {
     if (isStudyMode && answer?.selected_option_id) return; // lock in study mode
     setAnswer(current.id, optionId);
     if (isStudyMode) toast.success(current.options.find((o) => o.id === optionId)?.is_correct ? "Correct! ✓" : "Wrong!", { duration: 1500 });
+  };
+
+  const handleBookmark = async () => {
+    if (!profile || bookmarking) return;
+    setBookmarking(true);
+    const qId = current.id;
+    const isBookmarked = bookmarked.has(qId);
+    try {
+      if (isBookmarked) {
+        await removeBookmark(profile.id, qId);
+        setBookmarked((prev) => { const s = new Set(prev); s.delete(qId); return s; });
+        toast.success("Bookmark removed");
+      } else {
+        await addBookmark(profile.id, qId, current.course_id, profile.exam_type ?? "");
+        setBookmarked((prev) => new Set(prev).add(qId));
+        toast.success("Question bookmarked");
+      }
+    } catch {
+      toast.error("Failed to save bookmark");
+    } finally {
+      setBookmarking(false);
+    }
   };
 
   const timerColor = timeLeft !== null && timeLeft < 60 ? "text-red-500" : "text-gray-700";
@@ -134,10 +160,19 @@ export default function QuizActivePage() {
               <Flag size={15} /> {answer?.is_flagged ? "Flagged" : "Flag"}
             </button>
             <button
-              onClick={() => setReportModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+              onClick={handleBookmark}
+              disabled={bookmarking}
+              className={cn("flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-colors",
+                bookmarked.has(current.id)
+                  ? "border-primary-400 bg-primary-50 text-primary-700"
+                  : "border-gray-200 text-gray-600 hover:bg-gray-50"
+              )}
             >
-              <BookmarkPlus size={15} /> Bookmark
+              {bookmarked.has(current.id)
+                ? <Bookmark size={15} fill="currentColor" />
+                : <BookmarkPlus size={15} />
+              }
+              {bookmarked.has(current.id) ? "Saved" : "Bookmark"}
             </button>
           </div>
           <div className="flex gap-2">
@@ -192,11 +227,6 @@ export default function QuizActivePage() {
         </div>
       </Modal>
 
-      {/* Bookmark toast */}
-      <Modal open={reportModal} onClose={() => setReportModal(false)} title="Question Bookmarked">
-        <p className="text-gray-600 mb-4">This question has been saved to your bookmarks for review later.</p>
-        <button onClick={() => setReportModal(false)} className="w-full h-11 rounded-xl bg-primary-600 text-white font-semibold text-sm hover:bg-primary-700 transition-colors">Got it</button>
-      </Modal>
     </div>
   );
 }

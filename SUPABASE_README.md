@@ -8,13 +8,13 @@ A complete, beginner-friendly guide to connecting ExamQuest to Supabase. Read th
 
 Supabase is a free, open-source alternative to Firebase. It gives your app:
 
-| Feature | What it does |
-|---|---|
-| **Database** | A real PostgreSQL database (like Excel, but for apps) |
-| **Auth** | Login / signup with email, Google, etc. |
-| **Storage** | Store files and images |
-| **Row Level Security** | Rules that protect who can read/write data |
-| **Auto-generated API** | Your database becomes an instant REST API |
+| Feature                | What it does                                          |
+| ---------------------- | ----------------------------------------------------- |
+| **Database**           | A real PostgreSQL database (like Excel, but for apps) |
+| **Auth**               | Login / signup with email, Google, etc.               |
+| **Storage**            | Store files and images                                |
+| **Row Level Security** | Rules that protect who can read/write data            |
+| **Auto-generated API** | Your database becomes an instant REST API             |
 
 Think of it like this: Supabase is the "back end" of your app — it stores all the data, handles logins, and makes sure only the right people can access the right information.
 
@@ -71,42 +71,117 @@ This is where you set up all the "tables" (like spreadsheet sheets) that store y
 -- PROFILES TABLE
 -- Stores each user's personal information
 -- ─────────────────────────────────────────
-CREATE TABLE profiles (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  full_name TEXT NOT NULL,
-  email TEXT NOT NULL,
-  avatar_url TEXT,
-  exam_type TEXT CHECK (exam_type IN ('waec', 'utme', 'post_utme', 'university')),
-  school_id TEXT,
-  school_name TEXT,
-  enrolled_course_ids TEXT[] DEFAULT '{}',
-  current_streak INTEGER DEFAULT 0,
-  longest_streak INTEGER DEFAULT 0,
-  last_active_date DATE,
-  is_premium BOOLEAN DEFAULT FALSE,
-  onboarding_complete BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
+-- CREATE TABLE profiles (
+--   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+--   full_name TEXT NOT NULL,
+--   email TEXT NOT NULL,
+--   exam_type TEXT CHECK (exam_type IN ('waec', 'utme', 'post_utme', 'university')),
+--   school_id TEXT,
+--   school_name TEXT,
+--   enrolled_course_ids TEXT[] DEFAULT '{}',
+--   current_streak INTEGER DEFAULT 0,
+--   longest_streak INTEGER DEFAULT 0,
+--   last_active_date DATE,
+--   is_premium BOOLEAN DEFAULT FALSE,
+--   onboarding_complete BOOLEAN DEFAULT FALSE,
+--   created_at TIMESTAMPTZ DEFAULT NOW(),
+--   updated_at TIMESTAMPTZ DEFAULT NOW(),
+
+--   CONSTRAINT university_fields_only CHECK (
+--     (exam_type = 'university') OR (school_id IS NULL AND school_name IS NULL)
+--   ),
+--   CONSTRAINT school_fields_complete CHECK (
+--     school_id IS NULL = (school_name IS NULL)
+--   )
+-- );
 
 -- ─────────────────────────────────────────
 -- COURSES TABLE
 -- Stores all available courses (subjects)
 -- ─────────────────────────────────────────
-CREATE TABLE courses (
-  id TEXT PRIMARY KEY,
-  code TEXT NOT NULL,
-  name TEXT NOT NULL,
-  description TEXT,
-  exam_type TEXT CHECK (exam_type IN ('waec', 'utme', 'post_utme', 'university')),
-  department TEXT,
-  icon TEXT,
-  color TEXT,
-  total_questions INTEGER DEFAULT 0,
-  total_quizzes INTEGER DEFAULT 0,
-  rating DECIMAL(2,1) DEFAULT 0.0,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
+-- CREATE TABLE courses (
+--   id TEXT PRIMARY KEY,
+--   code TEXT NOT NULL,
+--   name TEXT NOT NULL,
+--   description TEXT,
+--   exam_type TEXT CHECK (exam_type IN ('waec', 'utme', 'post_utme', 'university')),
+
+--   icon TEXT,
+--   color TEXT,
+--   total_questions INTEGER DEFAULT 0,
+
+
+--   created_at TIMESTAMPTZ DEFAULT NOW()
+-- );
+Name	Type	Constraints
+id
+
+text
+
+Primary
+Non-nullable
+
+Edit
+
+code
+
+text
+
+Unique
+Non-nullable
+
+Edit
+
+name
+
+text
+
+Non-nullable
+
+Edit
+
+description
+
+text
+
+Nullable
+
+Edit
+
+exam_type
+
+text
+
+Non-nullable
+
+Edit
+
+icon
+
+text
+
+Nullable
+
+Edit
+
+color
+
+text
+
+Nullable
+
+Edit
+
+total_questions
+
+int4
+
+Nullable
+
+Edit
+
+created_at
+
 
 -- ─────────────────────────────────────────
 -- TOPICS TABLE
@@ -127,8 +202,6 @@ CREATE TABLE topics (
 CREATE TABLE questions (
   id TEXT PRIMARY KEY,
   course_id TEXT REFERENCES courses(id) ON DELETE CASCADE,
-  topic_id TEXT REFERENCES topics(id),
-  topic_name TEXT,
   question_text TEXT NOT NULL,
   difficulty TEXT CHECK (difficulty IN ('easy', 'medium', 'hard', 'mixed')),
   explanation TEXT,
@@ -318,18 +391,22 @@ Every database operation goes through supabase/db.ts
 ```
 
 ### `supabase/client.ts` — The Connection
+
 ```typescript
 import { createClient } from "@supabase/supabase-js";
 
 export const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
 );
 ```
+
 This file creates **one shared Supabase connection** that the whole app uses.
 
 ### `supabase/auth.ts` — Login & Signup
+
 All authentication functions live here:
+
 - `signUp(email, password, fullName)` — creates a new user in Supabase Auth AND a row in the `profiles` table
 - `signIn(email, password)` — logs in and returns a session
 - `signOut()` — logs out
@@ -337,7 +414,9 @@ All authentication functions live here:
 - `onAuthStateChange(callback)` — fires whenever the user logs in or out
 
 ### `supabase/db.ts` — Database Operations
+
 All database reads and writes live here:
+
 - `updateProfile(userId, data)` — save changes to a user's profile
 - `getCourses()` — fetch all courses from the `courses` table
 - `getQuestions(courseId, count, difficulty)` — fetch questions for a quiz
@@ -432,14 +511,14 @@ The app currently uses `constants/mockData.ts` for display while Supabase is bei
 
 ## 📁 File Reference
 
-| File | Purpose |
-|---|---|
-| `supabase/client.ts` | Creates the shared Supabase connection |
-| `supabase/auth.ts` | All signup, login, logout functions |
-| `supabase/db.ts` | All database read/write functions |
-| `store/authStore.ts` | Stores the logged-in user's profile in memory |
-| `hooks/useAuth.ts` | Listens for login/logout and keeps the store updated |
-| `.env.local` | Your secret API keys (never commit this to Git) |
+| File                 | Purpose                                              |
+| -------------------- | ---------------------------------------------------- |
+| `supabase/client.ts` | Creates the shared Supabase connection               |
+| `supabase/auth.ts`   | All signup, login, logout functions                  |
+| `supabase/db.ts`     | All database read/write functions                    |
+| `store/authStore.ts` | Stores the logged-in user's profile in memory        |
+| `hooks/useAuth.ts`   | Listens for login/logout and keeps the store updated |
+| `.env.local`         | Your secret API keys (never commit this to Git)      |
 
 ---
 
@@ -453,4 +532,4 @@ The app currently uses `constants/mockData.ts` for display while Supabase is bei
 
 ---
 
-*Made with ❤️ in Nigeria 🇳🇬 — ExamQuest Team*
+_Made with ❤️ in Nigeria 🇳🇬 — ExamQuest Team_

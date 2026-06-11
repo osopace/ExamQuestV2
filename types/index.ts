@@ -1,4 +1,4 @@
-export type ExamType = "waec" | "utme" | "post_utme" | "university";
+export type ExamType = "wassce" | "neco" | "utme" | "post-utme";
 export type Theme = "light" | "dark" | "system";
 export type Difficulty = "easy" | "medium" | "hard" | "mixed";
 export type QuizStatus = "in_progress" | "completed" | "abandoned";
@@ -10,6 +10,7 @@ export interface Profile {
   email: string;
   avatar_url?: string;
   exam_type?: ExamType;
+  exam_types?: ExamType[];
   school_id?: string;
   school_name?: string;
   enrolled_course_ids: string[];
@@ -20,6 +21,16 @@ export interface Profile {
   onboarding_complete: boolean;
   created_at: string;
   updated_at: string;
+}
+export interface StepTwoProps {
+  examType: ExamType | null;
+
+  selectedCourses: string[];
+
+  toggleCourse: (id: string) => void;
+  loading: boolean;
+  onBack: () => void;
+  onFinish: () => void;
 }
 
 export interface School {
@@ -36,12 +47,11 @@ export interface Course {
   name: string;
   description: string;
   exam_type: ExamType;
-  department?: string;
   icon: string;
   color: string;
   total_questions: number;
+
   total_quizzes: number;
-  rating: number;
 }
 
 export interface Topic {
@@ -61,7 +71,7 @@ export interface QuestionOption {
 export interface Question {
   id: string;
   course_id: string;
-  topic_id: string;
+  course_name: string;
   topic_name?: string;
   question_text: string;
   difficulty: Difficulty;
@@ -148,10 +158,27 @@ export interface ScoreOverTime {
   score: number;
 }
 
+export interface AppNotification {
+  id: string;
+  user_id: string;
+  type: "quiz_reminder" | "study_reminder" | "performance_digest";
+  title: string;
+  body: string;
+  read: boolean;
+  created_at: string;
+}
+
 export interface TopicAnalytics {
-  topic_id: string;
-  topic_name: string;
+  course_id: string;
+  course_name: string;
   total_questions: number;
   correct: number;
   accuracy: number;
+}
+export interface SchoolCourse {
+  course_id: string;
+  name: string;
+  description: string;
+  exam_type: ExamType;
+  department: string;
 }
