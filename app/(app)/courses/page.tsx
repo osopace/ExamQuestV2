@@ -49,7 +49,7 @@ async function fetchSubjectsForExamType(
   enrolledIds: string[] = [],
 ): Promise<DisplayCourse[]> {
   let all: DisplayCourse[] = [];
-  if (examType !== "university") {
+  if (examType) {
     const rows = await getExamSubjects(
       examType as "wassce" | "neco" | "utme" | "post-utme",
     );
