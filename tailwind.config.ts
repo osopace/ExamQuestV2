@@ -33,9 +33,9 @@ const config: Config = {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
       },
       boxShadow: {
-        card: "0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04)",
-        hover: "0 4px 16px rgba(79,70,229,0.15)",
-        modal: "0 20px 60px rgba(0,0,0,0.12)",
+        card: "none",
+        hover: "none",
+        modal: "none",
       },
       animation: {
         "fade-in": "fadeIn 0.3s ease-out",
@@ -60,8 +60,8 @@ const config: Config = {
           "40%,80%": { transform: "translateX(6px)" },
         },
         pulseDanger: {
-          "0%,100%": { boxShadow: "0 0 0 0 rgba(239,68,68,0.3)" },
-          "50%": { boxShadow: "0 0 0 10px rgba(239,68,68,0)" },
+          "0%,100%": { borderColor: "rgba(239,68,68,0.3)" },
+          "50%": { borderColor: "rgba(239,68,68,1)" },
         },
       },
     },

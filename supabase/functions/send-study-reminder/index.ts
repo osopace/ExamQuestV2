@@ -6,7 +6,7 @@ const SUPABASE_URL = env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_KEY = env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const RESEND_API_KEY = env.get("RESEND_API_KEY")!;
 const FROM_EMAIL = "onboarding@resend.dev";
-const APP_URL = "https://examquest.vercel.app";
+const APP_URL = "https://exam-quest-v2-mu.vercel.app/";
 const TEST_EMAIL = env.get("RESEND_TEST_EMAIL");
 
 function buildEmail(name: string): string {
