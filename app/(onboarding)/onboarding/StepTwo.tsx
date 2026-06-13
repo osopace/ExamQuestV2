@@ -5,8 +5,8 @@ import { CheckCircle, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
 import Button from "@/components/ui/Button";
 
 import { getExamSubjects } from "@/supabase/db";
-import{SUBJECTS} from "@/constants/mockData"
-import { getTerm } from "@/utils/terminology";
+import { SUBJECTS } from "@/constants/mockData";
+
 import type { StepTwoProps, ExamType } from "@/types";
 
 type DisplaySubjects = {
@@ -23,7 +23,7 @@ export default function StepTwo({
   onBack,
   onFinish,
 }: StepTwoProps) {
-  const term = getTerm(examType); // "Courses" or "Subjects"
+  const term = "subjects"; // "Courses" or "Subjects"
 
   const [subjects, setSubjects] = useState<DisplaySubjects[]>([]);
   const [fetching, setFetching] = useState<boolean>(false);

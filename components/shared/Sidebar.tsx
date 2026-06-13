@@ -18,7 +18,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/utils/cn";
-import { getTerm } from "@/utils/terminology";
+
 import { useAuthStore } from "@/store/authStore";
 import { useUIStore } from "@/store/uiStore";
 import { Avatar } from "@/components/ui/index";
@@ -37,7 +37,7 @@ export default function Sidebar() {
   const { profile, logout } = useAuthStore();
   const { sidebarOpen, closeSidebar, toggleSidebar } = useUIStore();
 
-  const term = getTerm(profile?.exam_type);
+  const term = "subjects";
 
   const NAV = [
     { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
