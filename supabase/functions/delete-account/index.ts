@@ -1,9 +1,10 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const env = (globalThis as any).Deno?.env;
+const SUPABASE_URL = env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_KEY = env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-Deno.serve(async (req) => {
+env.serve(async (req: any) => {
   // Only allow POST
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
@@ -11,7 +12,9 @@ Deno.serve(async (req) => {
 
   const authHeader = req.headers.get("Authorization");
   if (!authHeader) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+    });
   }
 
   const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
@@ -20,10 +23,15 @@ Deno.serve(async (req) => {
 
   // Verify the caller's JWT and get their user ID
   const token = authHeader.replace("Bearer ", "");
-  const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+  const {
+    data: { user },
+    error: authError,
+  } = await supabaseAdmin.auth.getUser(token);
 
   if (authError || !user) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+    });
   }
 
   const userId = user.id;
@@ -37,7 +45,8 @@ Deno.serve(async (req) => {
     await supabaseAdmin.from("profiles").delete().eq("id", userId);
 
     // Delete the Supabase Auth user (requires service role)
-    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+    const { error: deleteError } =
+      await supabaseAdmin.auth.admin.deleteUser(userId);
     if (deleteError) throw new Error(deleteError.message);
 
     return new Response(JSON.stringify({ success: true }), {

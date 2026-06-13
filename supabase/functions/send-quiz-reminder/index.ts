@@ -1,11 +1,13 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
+const env = (globalThis as any).Deno?.env;
+
+const SUPABASE_URL = env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_KEY = env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const RESEND_API_KEY = env.get("RESEND_API_KEY")!;
 const FROM_EMAIL = "onboarding@resend.dev";
 const APP_URL = "https://examquest.vercel.app";
-const TEST_EMAIL = Deno.env.get("RESEND_TEST_EMAIL");
+const TEST_EMAIL = env.get("RESEND_TEST_EMAIL");
 
 function buildEmail(name: string): string {
   return `
@@ -61,7 +63,7 @@ async function sendEmail(to: string, name: string): Promise<{ ok: boolean; error
   return { ok: true };
 }
 
-Deno.serve(async () => {
+env.serve(async () => {
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 

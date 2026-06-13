@@ -1,11 +1,13 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
+const env = (globalThis as any).Deno?.env;
+
+const SUPABASE_URL = env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_KEY = env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const RESEND_API_KEY = env.get("RESEND_API_KEY")!;
 const FROM_EMAIL = "onboarding@resend.dev";
 const APP_URL = "https://examquest.vercel.app";
-const TEST_EMAIL = Deno.env.get("RESEND_TEST_EMAIL");
+const TEST_EMAIL = env.get("RESEND_TEST_EMAIL");
 
 function buildEmail(name: string): string {
   return `
@@ -55,7 +57,7 @@ async function sendEmail(to: string, name: string): Promise<boolean> {
   return res.ok;
 }
 
-Deno.serve(async () => {
+env.serve(async () => {
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
@@ -65,11 +67,16 @@ Deno.serve(async () => {
       .eq("study_reminders", true);
 
     if (settingsError) {
-      return new Response(JSON.stringify({ error: settingsError.message }), { status: 500 });
+      return new Response(JSON.stringify({ error: settingsError.message }), {
+        status: 500,
+      });
     }
 
     if (!settings || settings.length === 0) {
-      return new Response(JSON.stringify({ sent: 0, message: "No users to notify" }), { status: 200 });
+      return new Response(
+        JSON.stringify({ sent: 0, message: "No users to notify" }),
+        { status: 200 },
+      );
     }
 
     const userIds = settings.map((s) => s.user_id);
@@ -80,17 +87,28 @@ Deno.serve(async () => {
       .in("id", userIds);
 
     if (profilesError) {
-      return new Response(JSON.stringify({ error: profilesError.message }), { status: 500 });
+      return new Response(JSON.stringify({ error: profilesError.message }), {
+        status: 500,
+      });
     }
 
     let sent = 0;
     const failures: { id: string }[] = [];
 
     for (const profile of profiles ?? []) {
-      const userSetting = settings.find((s: { user_id: string; email_notifications: boolean; push_notifications: boolean }) => s.user_id === profile.id);
+      const userSetting = settings.find(
+        (s: {
+          user_id: string;
+          email_notifications: boolean;
+          push_notifications: boolean;
+        }) => s.user_id === profile.id,
+      );
 
       if (profile.email && userSetting?.email_notifications) {
-        const ok = await sendEmail(profile.email, profile.full_name ?? "Student");
+        const ok = await sendEmail(
+          profile.email,
+          profile.full_name ?? "Student",
+        );
         if (ok) {
           sent++;
         } else {
@@ -110,7 +128,7 @@ Deno.serve(async () => {
 
     return new Response(
       JSON.stringify({ sent, failed: failures.length, failures }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
+      { status: 200, headers: { "Content-Type": "application/json" } },
     );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

@@ -1,11 +1,12 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "@supabase/supabase-js";
+const env = (globalThis as any).Deno?.env;
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
+const SUPABASE_URL = env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_KEY = env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const RESEND_API_KEY = env.get("RESEND_API_KEY")!;
 const FROM_EMAIL = "onboarding@resend.dev";
 const APP_URL = "https://examquest.vercel.app";
-const TEST_EMAIL = Deno.env.get("RESEND_TEST_EMAIL");
+const TEST_EMAIL = env.get("RESEND_TEST_EMAIL");
 
 interface WeekStats {
   quizCount: number;
@@ -15,8 +16,14 @@ interface WeekStats {
 }
 
 function buildEmail(name: string, stats: WeekStats): string {
-  const scoreColor = stats.avgScore >= 70 ? "#16a34a" : stats.avgScore >= 50 ? "#d97706" : "#dc2626";
-  const scoreEmoji = stats.avgScore >= 70 ? "🟢" : stats.avgScore >= 50 ? "🟡" : "🔴";
+  const scoreColor =
+    stats.avgScore >= 70
+      ? "#16a34a"
+      : stats.avgScore >= 50
+        ? "#d97706"
+        : "#dc2626";
+  const scoreEmoji =
+    stats.avgScore >= 70 ? "🟢" : stats.avgScore >= 50 ? "🟡" : "🔴";
   const hasActivity = stats.quizCount > 0;
 
   const activitySection = hasActivity
@@ -73,7 +80,11 @@ function buildEmail(name: string, stats: WeekStats): string {
   `;
 }
 
-async function sendEmail(to: string, name: string, stats: WeekStats): Promise<boolean> {
+async function sendEmail(
+  to: string,
+  name: string,
+  stats: WeekStats,
+): Promise<boolean> {
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -90,7 +101,7 @@ async function sendEmail(to: string, name: string, stats: WeekStats): Promise<bo
   return res.ok;
 }
 
-Deno.serve(async () => {
+env.serve(async () => {
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
@@ -100,11 +111,16 @@ Deno.serve(async () => {
       .eq("performance_updates", true);
 
     if (settingsError) {
-      return new Response(JSON.stringify({ error: settingsError.message }), { status: 500 });
+      return new Response(JSON.stringify({ error: settingsError.message }), {
+        status: 500,
+      });
     }
 
     if (!settings || settings.length === 0) {
-      return new Response(JSON.stringify({ sent: 0, message: "No users to notify" }), { status: 200 });
+      return new Response(
+        JSON.stringify({ sent: 0, message: "No users to notify" }),
+        { status: 200 },
+      );
     }
 
     const userIds = settings.map((s) => s.user_id);
@@ -115,17 +131,27 @@ Deno.serve(async () => {
       .in("id", userIds);
 
     if (profilesError) {
-      return new Response(JSON.stringify({ error: profilesError.message }), { status: 500 });
+      return new Response(JSON.stringify({ error: profilesError.message }), {
+        status: 500,
+      });
     }
 
     // Last 7 days window
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const sevenDaysAgo = new Date(
+      Date.now() - 7 * 24 * 60 * 60 * 1000,
+    ).toISOString();
 
     let sent = 0;
     const failures: { id: string }[] = [];
 
     for (const profile of profiles ?? []) {
-      const userSetting = settings.find((s: { user_id: string; email_notifications: boolean; push_notifications: boolean }) => s.user_id === profile.id);
+      const userSetting = settings.find(
+        (s: {
+          user_id: string;
+          email_notifications: boolean;
+          push_notifications: boolean;
+        }) => s.user_id === profile.id,
+      );
 
       const { data: quizzes } = await supabase
         .from("quizzes")
@@ -136,7 +162,10 @@ Deno.serve(async () => {
 
       const quizCount = quizzes?.length ?? 0;
       const scores = (quizzes ?? []).map((q) => q.score_percent ?? 0);
-      const avgScore = quizCount > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / quizCount) : 0;
+      const avgScore =
+        quizCount > 0
+          ? Math.round(scores.reduce((a, b) => a + b, 0) / quizCount)
+          : 0;
       const bestScore = quizCount > 0 ? Math.round(Math.max(...scores)) : 0;
 
       const stats: WeekStats = {
@@ -147,7 +176,11 @@ Deno.serve(async () => {
       };
 
       if (profile.email && userSetting?.email_notifications) {
-        const ok = await sendEmail(profile.email, profile.full_name ?? "Student", stats);
+        const ok = await sendEmail(
+          profile.email,
+          profile.full_name ?? "Student",
+          stats,
+        );
         if (ok) {
           sent++;
         } else {
@@ -156,9 +189,10 @@ Deno.serve(async () => {
       }
 
       if (userSetting?.push_notifications) {
-        const digestBody = quizCount > 0
-          ? `You completed ${quizCount} quiz${quizCount > 1 ? "zes" : ""} this week with an avg score of ${avgScore}%. Best: ${bestScore}%.`
-          : "No quizzes this week. Start strong — even one quiz a day adds up!";
+        const digestBody =
+          quizCount > 0
+            ? `You completed ${quizCount} quiz${quizCount > 1 ? "zes" : ""} this week with an avg score of ${avgScore}%. Best: ${bestScore}%.`
+            : "No quizzes this week. Start strong — even one quiz a day adds up!";
         await supabase.from("notifications").insert({
           user_id: profile.id,
           type: "performance_digest",
@@ -170,7 +204,7 @@ Deno.serve(async () => {
 
     return new Response(
       JSON.stringify({ sent, failed: failures.length, failures }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
+      { status: 200, headers: { "Content-Type": "application/json" } },
     );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

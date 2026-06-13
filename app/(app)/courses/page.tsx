@@ -11,7 +11,7 @@ import {
   updateProfile,
   getUserQuizzes,
 } from "@/supabase/db";
-import { getTerm } from "@/utils/terminology";
+
 import { useAuthStore } from "@/store/authStore";
 
 import { cn } from "@/utils/cn";
@@ -81,7 +81,7 @@ export default function CoursesPage() {
 
   const primaryType = examTypes[0];
   const secondaryType = examTypes[1];
-  const term = getTerm(primaryType);
+  const term = "subjects";
   const examLabel =
     EXAM_LABELS[primaryType ?? ""] ?? (primaryType ?? "").toUpperCase();
 

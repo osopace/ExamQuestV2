@@ -16,7 +16,7 @@ import { Stepper } from "@/components/ui/index";
 import StepTwo from "./StepTwo";
 import { updateProfile } from "@/supabase/db";
 import { useAuthStore } from "@/store/authStore";
-import { getTerm } from "@/utils/terminology";
+
 import type { ExamType } from "@/types";
 
 const EXAM_TYPES: {
@@ -65,7 +65,7 @@ export default function OnboardingPage() {
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const steps = ["Exam Type", `School & ${getTerm(examType)}`, "Done"];
+  const steps = ["Exam Type", `Subjects`, "Done"];
 
   const toggleCourse = (id: string) =>
     setSelectedCourses((p) =>

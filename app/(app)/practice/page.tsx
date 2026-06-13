@@ -16,7 +16,6 @@ import Topbar from "@/components/shared/Topbar";
 import { useQuizStore } from "@/store/quizStore";
 import { useAuthStore } from "@/store/authStore";
 import { getSubjectQuestions } from "@/supabase/db";
-import { getTerm } from "@/utils/terminology";
 
 import { cn } from "@/utils/cn";
 import type { Difficulty, QuizMode, ExamType } from "@/types";
@@ -52,7 +51,7 @@ export default function PracticePage() {
     : profile?.exam_type
       ? [profile.exam_type]
       : [];
-  const termSingular = getTerm(profile?.exam_type, false);
+  const termSingular = "subject";
 
   const urlCourse = searchParams.get("course") ?? "";
   const initialCourse = urlCourse || enrolledIds[0] || "";
@@ -138,11 +137,10 @@ export default function PracticePage() {
         <div className="p-6 max-w-3xl mx-auto">
           <Card padding="lg" className="text-center py-12">
             <p className="text-gray-500 mb-4">
-              You have no enrolled {getTerm(profile?.exam_type).toLowerCase()}{" "}
-              yet.
+              You have no enrolled subjects yet. yet.
             </p>
             <Button onClick={() => router.push("/courses")}>
-              Browse {getTerm(profile?.exam_type)}
+              Browse subjects
             </Button>
           </Card>
         </div>
