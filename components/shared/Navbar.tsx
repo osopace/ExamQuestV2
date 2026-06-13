@@ -9,7 +9,7 @@ import { useAuthStore } from "@/store/authStore";
 
 const NAV_LINKS = [
   { href: "/features", label: "Features" },
-  { href: "/allcourses", label: "Courses" },
+  { href: "/allsubjects", label: "Subjects" },
   { href: "/how-it-works", label: "How it Works" },
   { href: "/pricing", label: "Pricing" },
   { href: "/about", label: "About" },
@@ -23,7 +23,10 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 font-bold text-xl text-gray-900">
+        <Link
+          href="/"
+          className="flex items-center gap-2 font-bold text-xl text-gray-900"
+        >
           <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
             <BookOpen size={18} className="text-white" />
           </div>
@@ -57,7 +60,9 @@ export default function Navbar() {
           ) : (
             <>
               <Link href="/login">
-                <Button variant="ghost" size="sm">Log in</Button>
+                <Button variant="ghost" size="sm">
+                  Log in
+                </Button>
               </Link>
               <Link href="/signup">
                 <Button size="sm">Get Started Free</Button>
@@ -96,7 +101,9 @@ export default function Navbar() {
             ) : (
               <>
                 <Link href="/login" onClick={() => setOpen(false)}>
-                  <Button variant="outline" fullWidth>Log in</Button>
+                  <Button variant="outline" fullWidth>
+                    Log in
+                  </Button>
                 </Link>
                 <Link href="/signup" onClick={() => setOpen(false)}>
                   <Button fullWidth>Get Started Free</Button>
