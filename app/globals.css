@@ -44,7 +44,7 @@
   /* Button System */
   .btn-primary {
     @apply bg-primary-600 text-white px-6 py-2.5 rounded-xl font-medium transition-all 
-           hover:bg-primary-700 shadow-sm active:scale-[0.98] disabled:opacity-50;
+           hover:bg-primary-700 border border-primary-700 active:scale-[0.98] disabled:opacity-50;
   }
 
   .btn-secondary {
@@ -58,8 +58,8 @@
 
   /* Card System */
   .card-premium {
-    @apply bg-white border border-neutral-200 rounded-2xl p-6 shadow-sm 
-           transition-all hover:shadow-md;
+    @apply bg-white border border-neutral-200 rounded-2xl p-6 
+           transition-all hover:border-neutral-300;
   }
 
   /* Input System */
@@ -111,7 +111,7 @@
   }
 
   .tab-trigger-active {
-    @apply bg-white text-neutral-900 shadow-sm;
+    @apply bg-white text-neutral-900 border border-neutral-200;
   }
 
   /* Quiz Component Styles */
@@ -121,7 +121,7 @@
   }
 
   .quiz-option-selected {
-    @apply border-primary-500 bg-primary-50/50 shadow-md;
+    @apply border-primary-500 bg-primary-50/50;
   }
 
   /* Status Badges */
@@ -152,15 +152,11 @@
 
   /* High Precision Shadows (Stripe Style) */
   .shadow-premium {
-    box-shadow:
-      0 1px 3px 0 rgba(0, 0, 0, 0.1),
-      0 1px 2px -1px rgba(0, 0, 0, 0.1);
+    @apply border border-neutral-200;
   }
 
   .shadow-premium-hover:hover {
-    box-shadow:
-      0 10px 15px -3px rgba(0, 0, 0, 0.1),
-      0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    @apply border-neutral-300;
   }
 }
 
