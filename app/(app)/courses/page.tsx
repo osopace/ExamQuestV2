@@ -1,19 +1,13 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { Play, ArrowRight, Loader2, Plus, GraduationCap } from "lucide-react";
 import { Card, Badge } from "@/components/ui/index";
 import { ProgressBar } from "@/components/ui/index";
 import Topbar from "@/components/shared/Topbar";
-import {
-  getExamSubjects,
-  getSchoolCourses,
-  updateProfile,
-  getUserQuizzes,
-} from "@/supabase/db";
-
+import { updateProfile, getUserQuizzes } from "@/supabase/db";
+import { SUBJECTS } from "@/constants/mockData";
 import { useAuthStore } from "@/store/authStore";
-
 import { cn } from "@/utils/cn";
 import toast from "react-hot-toast";
 import type { ExamType } from "@/types";
@@ -36,123 +30,86 @@ const EXAM_LABELS: Record<string, string> = {
   "post-utme": "Post-UTME",
 };
 
-type DisplayCourse = {
-  id: string;
-  name: string;
-  code: string;
-  color: string;
-};
+type DisplayCourse = { id: string; name: string; code: string; color: string };
 
-async function fetchSubjectsForExamType(
-  examType: ExamType,
-  schoolId?: string,
-  enrolledIds: string[] = [],
-): Promise<DisplayCourse[]> {
-  let all: DisplayCourse[] = [];
-  if (examType) {
-    const rows = await getExamSubjects(
-      examType as "wassce" | "neco" | "utme" | "post-utme",
-    );
-    all = rows.map((s, i) => ({
-      id: s.subject_id,
-      name: s.name,
-      code: EXAM_LABELS[examType] ?? examType.toUpperCase(),
-      color: COLORS[i % COLORS.length],
-    }));
-  }
-  return all.filter((c) => !enrolledIds.includes(c.id));
-}
+const toDisplayCourse = (
+  id: string,
+  i: number,
+  code: string,
+): DisplayCourse => ({
+  id,
+  name: id.charAt(0).toUpperCase() + id.slice(1),
+  code,
+  color: COLORS[i % COLORS.length],
+});
 
 export default function CoursesPage() {
   const { profile, updateProfile: updateStore } = useAuthStore();
-  const [browsePrimary, setBrowsePrimary] = useState<DisplayCourse[]>([]);
-  const [browseSecondary, setBrowseSecondary] = useState<DisplayCourse[]>([]);
 
+  const [browseCourses, setBrowseCourses] = useState<DisplayCourse[]>([]);
   const [quizCounts, setQuizCounts] = useState<Record<string, number>>({});
   const [fetching, setFetching] = useState(true);
   const [enrolling, setEnrolling] = useState<string | null>(null);
 
-  const enrolledIds = profile?.enrolled_course_ids ?? [];
-  const examTypes: ExamType[] = profile?.exam_types?.length
-    ? (profile.exam_types as ExamType[])
-    : profile?.exam_type
-      ? [profile.exam_type]
-      : [];
-
-  const primaryType = examTypes[0];
-  const secondaryType = examTypes[1];
   const term = "subjects";
-  const examLabel =
-    EXAM_LABELS[primaryType ?? ""] ?? (primaryType ?? "").toUpperCase();
+  const enrolledIds = profile?.enrolled_course_ids ?? [];
+
+  const examTypes: ExamType[] = useMemo(
+    () =>
+      profile?.exam_types?.length
+        ? (profile.exam_types as ExamType[])
+        : profile?.exam_type
+          ? [profile.exam_type]
+          : [],
+    [profile?.exam_types, profile?.exam_type],
+  );
+  const primaryType = examTypes[0];
 
   const enrolledLabel = examTypes
     .map((et) => EXAM_LABELS[et] ?? et.toUpperCase())
     .join(" · ");
 
-  const enrolledCourses: DisplayCourse[] = enrolledIds.map((id, i) => ({
-    id,
-    name: id.charAt(0).toUpperCase() + id.slice(1),
-    code: enrolledLabel,
-    color: COLORS[i % COLORS.length],
-  }));
+  const enrolledCourses: DisplayCourse[] = enrolledIds.map((id, i) =>
+    toDisplayCourse(id, i, enrolledLabel),
+  );
+
+  const unenrolled: DisplayCourse[] = useMemo(() => {
+    if (!primaryType) return [];
+    const code = EXAM_LABELS[primaryType] ?? primaryType.toUpperCase();
+    return SUBJECTS.filter((subject) => !enrolledIds.includes(subject)).map(
+      (id, i) => toDisplayCourse(id, i, code),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [primaryType, enrolledIds]);
 
   useEffect(() => {
     if (!profile?.id || !primaryType) return;
 
-    const load = async () => {
-      setFetching(true);
-      try {
-        const [primary, secondary] = await Promise.all([
-          fetchSubjectsForExamType(primaryType, profile.school_id, enrolledIds),
-          secondaryType
-            ? fetchSubjectsForExamType(
-                secondaryType,
-                profile.school_id,
-                enrolledIds,
-              )
-            : Promise.resolve([]),
-        ]);
-        setBrowsePrimary(primary);
-        setBrowseSecondary(secondary);
-      } catch (err) {
-        console.error("Failed to load subjects:", err);
-      } finally {
-        setFetching(false);
-      }
+    setFetching(true);
+    setBrowseCourses(unenrolled);
+    setFetching(false);
 
-      getUserQuizzes(profile.id, 500)
-        .then((quizzes) => {
-          const counts: Record<string, number> = {};
-          quizzes.forEach((q) => {
-            counts[q.course_id] = (counts[q.course_id] ?? 0) + 1;
-          });
-
-          setQuizCounts(counts);
-        })
-        .catch(() => {});
-    };
-
-    load();
-  }, [
-    profile?.exam_type,
-    profile?.exam_types,
-    profile?.school_id,
-    profile?.id,
-    profile?.enrolled_course_ids,
-  ]);
+    getUserQuizzes(profile.id, 500)
+      .then((quizzes) => {
+        const counts: Record<string, number> = {};
+        quizzes.forEach((q) => {
+          counts[q.course_id] = (counts[q.course_id] ?? 0) + 1;
+        });
+        setQuizCounts(counts);
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.id, primaryType, enrolledIds]);
 
   const handleEnrol = async (courseId: string, courseName: string) => {
     if (!profile) return;
     setEnrolling(courseId);
-    const updated = [...enrolledIds, courseId];
     try {
+      const updated = [...enrolledIds, courseId];
       await updateProfile(profile.id, { enrolled_course_ids: updated });
       updateStore({ enrolled_course_ids: updated });
-
-      setBrowsePrimary((prev) => prev.filter((c) => c.id !== courseId));
-      setBrowseSecondary((prev) => prev.filter((c) => c.id !== courseId));
-
-      toast.success(`${courseName} added to your ${term.toLowerCase()}`);
+      setBrowseCourses((prev) => prev.filter((c) => c.id !== courseId));
+      toast.success(`${courseName} added to your ${term}`);
     } catch {
       toast.error("Failed to enrol. Please try again.");
     } finally {
@@ -164,106 +121,93 @@ export default function CoursesPage() {
     <div>
       <Topbar title={`My ${term}`} />
       <div className="p-6 max-w-6xl mx-auto space-y-8">
-        {/* Enrolled */}
         <section>
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-xl font-bold text-gray-900">Enrolled {term}</h2>
             <span className="text-sm text-gray-500">
-              {enrolledCourses.length} {term.toLowerCase()}
+              {enrolledCourses.length} {term}
             </span>
           </div>
 
           {enrolledCourses.length === 0 ? (
             <p className="text-sm text-gray-400 py-6">
-              No {term.toLowerCase()} enrolled yet. Browse below to get started.
+              No {term} enrolled yet. Browse below to get started.
             </p>
           ) : (
             <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
               {enrolledCourses.map((course) => (
-                <Card
+                <EnrolledCard
                   key={course.id}
-                  padding="none"
-                  className="overflow-hidden"
-                >
-                  <div
-                    className="h-2"
-                    style={{ backgroundColor: course.color }}
-                  />
-                  <div className="p-5">
-                    <div className="flex items-start justify-between mb-3">
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: course.color + "20" }}
-                      >
-                        <GraduationCap
-                          size={20}
-                          style={{ color: course.color }}
-                        />
-                      </div>
-                      <Badge variant="primary">Active</Badge>
-                    </div>
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                      {course.code}
-                    </p>
-                    <h3 className="font-bold text-gray-900 mb-4">
-                      {course.name}
-                    </h3>
-                    <ProgressBar
-                      value={Math.min(100, (quizCounts[course.id] ?? 0) * 10)}
-                      size="sm"
-                      className="mb-3"
-                      showLabel
-                    />
-                    <div className="text-xs text-gray-500 mb-4">
-                      {quizCounts[course.id] ?? 0} quizzes taken
-                    </div>
-                    <div className="flex gap-2">
-                      <Link
-                        href={`/practice?course=${encodeURIComponent(course.id)}`}
-                        className="flex-1"
-                      >
-                        <button className="w-full flex items-center justify-center gap-2 h-9 bg-primary-600 text-white rounded-xl text-xs font-semibold hover:bg-primary-700 transition-colors">
-                          <Play size={13} /> Practice
-                        </button>
-                      </Link>
-                      <Link href={`/course/${encodeURIComponent(course.id)}`}>
-                        <button className="h-9 px-3 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors">
-                          <ArrowRight size={15} />
-                        </button>
-                      </Link>
-                    </div>
-                  </div>
-                </Card>
+                  course={course}
+                  progress={Math.min(100, (quizCounts[course.id] ?? 0) * 10)}
+                  quizCount={quizCounts[course.id] ?? 0}
+                />
               ))}
             </div>
           )}
         </section>
 
-        {/* Browse More — Primary */}
         <BrowseSection
           title={`Browse More ${term}`}
           subtitle={EXAM_LABELS[primaryType ?? ""] ?? ""}
-          courses={browsePrimary}
+          courses={browseCourses}
           fetching={fetching}
           enrolling={enrolling}
           term={term}
           onEnrol={handleEnrol}
         />
-
-        {/* Browse More — Secondary (only when 2 exam types) */}
-        {secondaryType && (
-          <BrowseSection
-            title={`Browse More — ${EXAM_LABELS[secondaryType] ?? secondaryType.toUpperCase()}`}
-            subtitle={`${EXAM_LABELS[secondaryType]} subjects available to add`}
-            courses={browseSecondary}
-            fetching={fetching}
-            enrolling={enrolling}
-            term={term}
-            onEnrol={handleEnrol}
-          />
-        )}
       </div>
     </div>
+  );
+}
+
+function EnrolledCard({
+  course,
+  progress,
+  quizCount,
+}: {
+  course: DisplayCourse;
+  progress: number;
+  quizCount: number;
+}) {
+  return (
+    <Card padding="none" className="overflow-hidden">
+      <div className="h-2" style={{ backgroundColor: course.color }} />
+      <div className="p-5">
+        <div className="flex items-start justify-between mb-3">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: course.color + "20" }}
+          >
+            <GraduationCap size={20} style={{ color: course.color }} />
+          </div>
+          <Badge variant="primary">Active</Badge>
+        </div>
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+          {course.code}
+        </p>
+        <h3 className="font-bold text-gray-900 mb-4">{course.name}</h3>
+        <ProgressBar value={progress} size="sm" className="mb-3" showLabel />
+        <div className="text-xs text-gray-500 mb-4">
+          {quizCount} quizzes taken
+        </div>
+        <div className="flex gap-2">
+          <Link
+            href={`/practice?course=${encodeURIComponent(course.id)}`}
+            className="flex-1"
+          >
+            <button className="w-full flex items-center justify-center gap-2 h-9 bg-primary-600 text-white rounded-xl text-xs font-semibold hover:bg-primary-700 transition-colors">
+              <Play size={13} /> Practice
+            </button>
+          </Link>
+          <Link href={`/course/${encodeURIComponent(course.id)}`}>
+            <button className="h-9 px-3 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors">
+              <ArrowRight size={15} />
+            </button>
+          </Link>
+        </div>
+      </div>
+    </Card>
   );
 }
 
@@ -294,14 +238,11 @@ function BrowseSection({
       {fetching ? (
         <div className="flex items-center gap-2 text-gray-400 py-6">
           <Loader2 size={18} className="animate-spin" />
-          <span className="text-sm">
-            Loading available {term.toLowerCase()}...
-          </span>
+          <span className="text-sm">Loading available {term}...</span>
         </div>
       ) : courses.length === 0 ? (
         <p className="text-sm text-gray-400 py-6">
-          You are enrolled in all available {term.toLowerCase()} for this exam
-          type.
+          You are enrolled in all available {term} for this exam type.
         </p>
       ) : (
         <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">

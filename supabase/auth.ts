@@ -1,19 +1,47 @@
 import { supabase } from "./client";
 import type { Profile } from "@/types";
 
-export async function signUp(email: string, password: string, fullName: string) {
+export async function signUp(
+  email: string,
+  password: string,
+  fullName: string,
+) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: fullName } },
+    options: {
+      data: { full_name: fullName },
+    },
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  // Create profile row
+
+  return data;
+}
+
+export async function resendOtp(email: string) {
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email,
+  });
+  if (error) throw error;
+}
+export async function verifyOtp(email: string, token: string) {
+  const { data, error } = await supabase.auth.verifyOtp({
+    email,
+    type: "signup",
+    token,
   });
   if (error) throw error;
 
-  // Create profile row
   if (data.user) {
-    await supabase.from("profiles").insert({
+    const { error: profileError } = await supabase.from("profiles").upsert({
       id: data.user.id,
-      full_name: fullName,
+      full_name: data.user.user_metadata?.full_name ?? "",
       email,
       enrolled_course_ids: [],
       current_streak: 0,
@@ -21,12 +49,20 @@ export async function signUp(email: string, password: string, fullName: string) 
       is_premium: false,
       onboarding_complete: false,
     });
+
+    if (profileError) {
+      await supabase.auth.signOut();
+      throw profileError;
+    }
   }
   return data;
 }
 
 export async function signIn(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
   if (error) throw error;
   return data;
 }
@@ -51,6 +87,8 @@ export async function getProfile(userId: string): Promise<Profile | null> {
   return data as Profile;
 }
 
-export function onAuthStateChange(cb: Parameters<typeof supabase.auth.onAuthStateChange>[0]) {
+export function onAuthStateChange(
+  cb: Parameters<typeof supabase.auth.onAuthStateChange>[0],
+) {
   return supabase.auth.onAuthStateChange(cb);
 }

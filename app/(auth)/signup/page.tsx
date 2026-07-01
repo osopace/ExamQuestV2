@@ -49,8 +49,11 @@ export default function SignupPage() {
     setLoading(true);
     try {
       await signUp(form.email, form.password, form.fullName);
-      toast.success("Account created! Let's set you up.");
-      router.push("/onboarding");
+      toast.success("Account created! Check your email to confirm.");
+      // Redirect to confirmation page with email as query param
+      router.push(
+        `/confirm-your-email?email=${encodeURIComponent(form.email)}`,
+      );
     } catch (err: unknown) {
       const msg =
         err instanceof Error
